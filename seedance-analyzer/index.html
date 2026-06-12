@@ -476,6 +476,23 @@ async function analyze() {
 
   hideError();
   els.analyzeBtn.disabled = true;
+
+  // Verbindungs-Check mit Mini-Request, bevor das große Material gesendet wird
+  showStatus("Verbindung zur Claude-API wird geprüft …");
+  try {
+    await precheckApi(apiKey);
+  } catch (err) {
+    hideStatus();
+    els.analyzeBtn.disabled = false;
+    if (err instanceof ApiError && err.status === 401) {
+      showError("API-Key ungültig. Bitte Key prüfen und neu speichern (beginnt mit „sk-ant-“).");
+      els.keybox.open = true;
+    } else {
+      showError(NETWORK_HELP);
+    }
+    return;
+  }
+
   showStatus("Claude analysiert das Material bis ins kleinste Detail … das kann 1–3 Minuten dauern.");
   els.resultCard.classList.remove("hidden");
   els.result.innerHTML = '<p class="muted">Warte auf Antwort …</p>';
@@ -560,6 +577,9 @@ async function analyze() {
       showError("Rate-Limit erreicht. Bitte kurz warten und erneut versuchen.");
     } else if (err instanceof ApiError && err.status === 413) {
       showError("Das Material ist zu groß für eine Anfrage. Bitte ein kürzeres Video oder kleineres Foto verwenden.");
+    } else if (err instanceof TypeError) {
+      // "Failed to fetch" / "Load failed": Verbindung beim Senden abgebrochen oder blockiert
+      showError("Die Verbindung ist beim Hochladen abgebrochen. " + NETWORK_HELP);
     } else {
       showError("Fehler bei der Analyse: " + (err?.message || err));
     }
@@ -572,6 +592,30 @@ async function analyze() {
 
 class ApiError extends Error {
   constructor(status, message) { super(message); this.status = status; }
+}
+
+const NETWORK_HELP =
+  "Keine Verbindung zur Claude-API (api.anthropic.com) möglich. Häufigste Ursachen: " +
+  "① Werbe-/Tracking-Blocker (uBlock, AdGuard, Brave-Schild, Pi-hole, „Verbesserter Schutz“ in Firefox) " +
+  "— bitte für diese Seite deaktivieren. " +
+  "② Keine oder instabile Internetverbindung — bei Videos hilft WLAN statt mobiler Daten. " +
+  "③ Firmen-/Schul-WLAN mit Filter — bitte mit mobilen Daten testen.";
+
+/* Mini-Request gegen /v1/models: prüft Erreichbarkeit + API-Key, bevor MB-große Payloads gesendet werden */
+async function precheckApi(apiKey) {
+  let resp;
+  try {
+    resp = await fetch("https://api.anthropic.com/v1/models?limit=1", {
+      headers: {
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+    });
+  } catch (_) {
+    throw new ApiError(0, "network");
+  }
+  if (resp.status === 401) throw new ApiError(401, "unauthorized");
 }
 
 function imgBlock(b64) {
