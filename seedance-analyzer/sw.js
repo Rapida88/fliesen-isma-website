@@ -1,6 +1,6 @@
 /* Service Worker: App-Shell cachen, damit die App offline startet.
    Die eigentliche Analyse braucht natürlich Internet (Claude API). */
-const CACHE = "seedance-analyzer-v1";
+const CACHE = "seedance-analyzer-v2";
 const SHELL = ["./", "index.html", "manifest.webmanifest", "icon.svg"];
 
 self.addEventListener("install", (e) => {
