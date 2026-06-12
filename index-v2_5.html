@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fliesenleger Passau – Fliesen ISMA | Badsanierung, Naturstein & Bodenfliesen</title>
+  <meta name="description" content="Fliesen ISMA – Ihr Fliesenleger-Meisterteam für Passau & Umgebung. Über 17 Jahre Erfahrung: Badsanierung, begehbare Duschen, Großformatfliesen, Naturstein, Terrassen & Treppen." />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    :root {
+      --porzellan: #F2F1ED;
+      --schiefer: #16181B;
+      --graphit: #24272B;
+      --cotto: #B5552D;
+      --cotto-hell: #D97B52;
+      --fuge: #C9C5BD;
+      --stein: #8A877F;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--porzellan);
+      color: var(--schiefer);
+      font-family: "Segoe UI", system-ui, sans-serif;
+      font-size: 17px;
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3 { font-family: Georgia, serif; font-weight: 400; line-height: 1.05; letter-spacing: -0.01em; }
+    em { font-style: normal; color: var(--cotto); }
+
+    /* Navigation */
+    .nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 32px;
+      background: var(--porzellan);
+      transition: background 0.4s;
+      will-change: transform;
+    }
+    .nav.scrolled {
+      background: rgba(242, 241, 237, 0.95);
+      box-shadow: 0 1px 0 var(--fuge);
+    }
+    .nav-brand {
+      font-size: 1.05rem;
+      letter-spacing: 0.06em;
+      color: var(--schiefer);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: opacity 0.3s;
+    }
+    .nav-brand:hover { opacity: 0.75; }
+    .logo-svg {
+      height: 32px;
+      width: 32px;
+      display: block;
+      color: var(--cotto);
+    }
+    .logo-text {
+      font-family: "Courier New", monospace;
+      font-weight: bold;
+      font-size: 0.95rem;
+      letter-spacing: 0.08em;
+    }
+    .nav nav { display: flex; gap: 28px; align-items: center; }
+    .nav nav a {
+      color: var(--schiefer);
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 500;
+      transition: opacity 0.2s;
+    }
+    .nav nav a:hover { opacity: 0.65; }
+    .nav-cta {
+      border: 1.5px solid currentColor;
+      padding: 8px 18px;
+      border-radius: 2px;
+    }
+    a:focus-visible { outline: 2px solid var(--cotto); outline-offset: 3px; }
+
+    /* Hero */
+    .cinematic { position: relative; height: 250vh; background: var(--schiefer); }
+    .sticky {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+      will-change: contents;
+    }
+    #scrub-video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transform: scale(1);
+      transform-origin: center;
+      will-change: transform;
+    }
+    .vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(120% 90% at 50% 45%, transparent 50%, rgba(10, 10, 12, 0.55) 100%),
+        linear-gradient(180deg, rgba(10,10,12,0.45) 0%, transparent 22%, transparent 72%, rgba(10,10,12,0.6) 100%);
+    }
+
+    .overlay { position: relative; z-index: 10; text-align: center; padding: 0 24px; width: 100%; }
+    .line {
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-50%, -50%);
+      width: max-content;
+      max-width: 92vw;
+      color: var(--porzellan);
+      opacity: 0;
+      will-change: opacity;
+      text-shadow: 
+        0 0 20px rgba(0,0,0,0.6),
+        0 2px 8px rgba(0,0,0,0.5),
+        2px 2px 4px rgba(0,0,0,0.4);
+      filter: drop-shadow(0 0 15px rgba(0,0,0,0.5));
+    }
+    h1.line, .line-brand {
+      font-family: Georgia, serif;
+      font-size: clamp(2.6rem, 9vw, 7.5rem);
+      letter-spacing: -0.015em;
+      line-height: 1;
+    }
+    .line-sub {
+      font-family: "Courier New", monospace;
+      font-size: clamp(1rem, 2.6vw, 1.6rem);
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+    .line-brand .dot { color: var(--cotto); }
+
+    .spec {
+      position: absolute;
+      z-index: 12;
+      font-family: "Courier New", monospace;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      color: rgba(242, 241, 237, 0.75);
+    }
+    .tl { top: 84px; left: 32px; }
+    .tr { top: 84px; right: 32px; }
+    .bl { bottom: 64px; left: 32px; }
+    .br { bottom: 64px; right: 32px; }
+
+    .progress {
+      position: absolute;
+      left: 32px; right: 32px; bottom: 40px;
+      height: 2px;
+      background: rgba(242,241,237,0.15);
+      z-index: 12;
+    }
+    .progress-fill { height: 100%; width: 0%; background: var(--cotto); }
+    .scroll-hint {
+      position: absolute;
+      bottom: 12px; left: 50%;
+      transform: translateX(-50%);
+      z-index: 12;
+      font-family: "Courier New", monospace;
+      font-size: 11px;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: rgba(242,241,237,0.65);
+      animation: bob 1.9s ease-in-out infinite;
+      transition: opacity 0.4s;
+    }
+    @keyframes bob {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50%      { transform: translateX(-50%) translateY(6px); }
+    }
+
+    /* Sections */
+    section { padding: 110px 32px; }
+    .eyebrow {
+      font-family: "Courier New", monospace;
+      font-size: 12px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--cotto);
+      margin-bottom: 18px;
+    }
+    .section-head { max-width: 1100px; margin: 0 auto 56px; }
+    h2 { font-size: clamp(1.9rem, 4.6vw, 3.4rem); margin-bottom: 24px; }
+
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .reveal.visible { opacity: 1; transform: none; }
+
+    /* Intro */
+    .intro { max-width: 1100px; margin: 0 auto; }
+    .intro-text { max-width: 680px; color: var(--graphit); }
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      background: var(--fuge);
+      border: 3px solid var(--fuge);
+      margin-top: 56px;
+    }
+    .stats > div { background: var(--porzellan); padding: 30px 26px; }
+    .stats dt { font-family: Georgia, serif; font-size: clamp(2rem, 4vw, 3rem); color: var(--cotto); }
+    .stats dd { font-size: 0.95rem; color: var(--stein); margin-top: 6px; }
+
+    /* Leistungen */
+    .leistungen { background: var(--schiefer); color: var(--porzellan); }
+    .leistungen h2 { color: var(--porzellan); }
+    .tile-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 3px;
+      background: var(--stein);
+      border: 3px solid var(--stein);
+    }
+    .tile {
+      background: var(--graphit);
+      padding: 38px 34px;
+      transition: background 0.3s, transform 0.3s;
+    }
+    .tile:hover { background: #2E3237; transform: translateY(-3px); }
+    .tile-wide { grid-column: span 2; }
+    .tile-mass {
+      font-family: "Courier New", monospace;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      color: var(--cotto-hell);
+      display: block;
+      margin-bottom: 16px;
+    }
+    .tile h3 { font-size: 1.35rem; margin-bottom: 12px; }
+    .tile p { color: rgba(242,241,237,0.7); font-size: 0.98rem; }
+
+    /* Referenzen */
+    .ref-grid {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 3px;
+      background: var(--fuge);
+      border: 3px solid var(--fuge);
+    }
+    .ref-grid figure { position: relative; overflow: hidden; aspect-ratio: 4/3; background: var(--graphit); }
+    .ref-grid img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.6s ease;
+      contain: layout style paint;
+    }
+    .ref-grid figure:hover img { transform: scale(1.05); }
+    .ref-grid figcaption {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      padding: 14px 16px;
+      font-family: "Courier New", monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--porzellan);
+      background: linear-gradient(transparent, rgba(10,10,12,0.75));
+    }
+    .ref-note { max-width: 1100px; margin: 28px auto 0; color: var(--stein); font-size: 0.95rem; }
+
+    /* Über uns */
+    .ueber { background: var(--porzellan); }
+    .ueber-inner { max-width: 760px; margin: 0 auto; }
+    .ueber p { margin-bottom: 18px; color: var(--graphit); }
+
+    /* Kontakt */
+    .kontakt {
+      background: var(--cotto);
+      color: var(--porzellan);
+      text-align: center;
+    }
+    .kontakt h2 { color: var(--porzellan); }
+    .kontakt .eyebrow { color: rgba(242,241,237,0.8); }
+    .kontakt-actions {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 36px;
+    }
+    .btn-primary, .btn-secondary {
+      font-family: "Courier New", monospace;
+      font-size: 0.95rem;
+      letter-spacing: 0.06em;
+      text-decoration: none;
+      padding: 16px 30px;
+      border-radius: 2px;
+      transition: transform 0.2s, background 0.2s, color 0.2s;
+      border: none;
+      cursor: pointer;
+    }
+    .btn-primary { background: var(--schiefer); color: var(--porzellan); }
+    .btn-primary:hover { transform: translateY(-2px); }
+    .btn-secondary { border: 1.5px solid var(--porzellan); color: var(--porzellan); background: transparent; }
+    .btn-secondary:hover { background: var(--porzellan); color: var(--cotto); }
+
+    /* Footer */
+    .footer {
+      background: var(--schiefer);
+      color: rgba(242,241,237,0.6);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding: 28px 32px;
+      font-size: 0.85rem;
+    }
+    .footer nav { display: flex; gap: 20px; }
+    .footer a { color: inherit; text-decoration: none; }
+    .footer a:hover { color: var(--porzellan); }
+
+    @media (max-width: 760px) {
+      .nav { padding: 12px 18px; }
+      .nav nav { gap: 14px; }
+      .nav nav a { font-size: 0.8rem; }
+      .tile-grid, .ref-grid, .stats { grid-template-columns: 1fr; }
+      .tile-wide { grid-column: span 1; }
+      section { padding: 72px 20px; }
+      .logo-text { display: none; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .scroll-hint { animation: none; }
+      .cinematic { height: 100vh; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="nav" id="nav">
+    <a class="nav-brand" href="#top" aria-label="Fliesen ISMA – zur Startseite">
+      <svg class="logo-svg" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg">
+        <!-- Fugen-Raster Logo -->
+        <rect x="4" y="4" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="16" y="4" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="28" y="4" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="4" y="16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="16" y="16" width="10" height="10" fill="currentColor"/>
+        <rect x="28" y="16" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="4" y="28" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="16" y="28" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.2"/>
+        <rect x="28" y="28" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.2"/>
+      </svg>
+      <span class="logo-text">ISMA</span>
+    </a>
+    <nav aria-label="Hauptnavigation">
+      <a href="#leistungen">Leistungen</a>
+      <a href="#referenzen">Referenzen</a>
+      <a href="#ueber-uns">Über uns</a>
+      <a class="nav-cta" href="#kontakt">Beratung anfragen</a>
+    </nav>
+  </header>
+
+  <section class="cinematic" id="top">
+    <div class="sticky">
+      <video id="scrub-video"
+             src="https://d8j0ntlcm91z4.cloudfront.net/user_2vE6LdMVjQtBFyJzVj3YQirIGNH/hf_20260612_083015_68fad8ee-e00e-4a38-9791-263c0dd552bf.mp4"
+             poster="https://d8j0ntlcm91z4.cloudfront.net/user_2vE6LdMVjQtBFyJzVj3YQirIGNH/hf_20260612_082849_18afbfc2-0aab-45bb-92cd-4bcdb016260b.png"
+             muted playsinline preload="auto"></video>
+      <div class="vignette"></div>
+
+      <div class="overlay">
+        <h1 class="line" data-in="0.00" data-out="0.28">Maßarbeit.</h1>
+        <p class="line line-sub" data-in="0.34" data-out="0.62">Fliese für Fliese. Fuge für Fuge.</p>
+        <p class="line line-brand" data-in="0.70" data-out="1.00">Fliesen ISMA<span class="dot">.</span></p>
+      </div>
+
+      <div class="spec tl">MODERN FORMAT</div>
+      <div class="spec tr">PREMIUM QUALITÄT</div>
+      <div class="spec bl">PASSAU · NIEDERBAYERN</div>
+      <div class="spec br">17+ ERFAHRUNG</div>
+
+      <div class="progress"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="scroll-hint" id="scroll-hint">Scrollen ▾</div>
+    </div>
+  </section>
+
+  <section class="intro">
+    <p class="eyebrow reveal">Fliesenleger für Passau &amp; Umgebung</p>
+    <h2 class="reveal">Gutes Handwerk erkennt man<br/>an der <em>Fuge</em>.</h2>
+    <p class="intro-text reveal">
+      Einfach nur Fliesen legen können viele. Wichtig ist, dass Ihre neuen Fliesen nicht nur
+      schön aussehen, sondern halten, was sie versprechen — über Jahre, in allen Situationen.
+      Wir verlegen Fliesen, Naturstein und Mosaik im Innen- und Außenbereich. Sauber, präzise, zum fairen Preis.
+    </p>
+    <dl class="stats reveal">
+      <div><dt>17+</dt><dd>Jahre Berufserfahrung</dd></div>
+      <div><dt>2er</dt><dd>Meisterteam — ein Ansprechpartner</dd></div>
+      <div><dt>100%</dt><dd>Empfehlungen durch zufriedene Kunden</dd></div>
+    </dl>
+  </section>
+
+  <section class="leistungen" id="leistungen">
+    <div class="section-head">
+      <p class="eyebrow reveal">Leistungen</p>
+      <h2 class="reveal">Verlegt wie ein Fliesenspiegel.</h2>
+    </div>
+
+    <div class="tile-grid reveal">
+      <article class="tile tile-wide">
+        <span class="tile-mass">01 — 120 × 60</span>
+        <h3>Komplette Badsanierung</h3>
+        <p>Vom Abriss bis zur letzten Silikonfuge: begehbare Duschen, bodengleiche Abläufe, Wand- und Bodenfliesen aus einer Hand.</p>
+      </article>
+      <article class="tile">
+        <span class="tile-mass">02 — 60 × 60</span>
+        <h3>Bodenfliesen</h3>
+        <p>Bodenverlegung aller Art — auch Großformat 120 × 120, perfekt ausgerichtet.</p>
+      </article>
+      <article class="tile">
+        <span class="tile-mass">03 — 60 × 60</span>
+        <h3>Wandfliesen</h3>
+        <p>Küche, Bad, Wohnräume. Alle am Markt erhältlichen Fliesenarten.</p>
+      </article>
+      <article class="tile">
+        <span class="tile-mass">04 — 60 × 60</span>
+        <h3>Naturstein &amp; Granit</h3>
+        <p>Zeitlose Materialien fachgerecht verarbeitet — innen wie außen.</p>
+      </article>
+      <article class="tile">
+        <span class="tile-mass">05 — 60 × 60</span>
+        <h3>Terrassen &amp; Balkone</h3>
+        <p>Sanierung und Neuverlegung, frostsicher und mit Gefälle nach Norm.</p>
+      </article>
+      <article class="tile tile-wide">
+        <span class="tile-mass">06 — 120 × 60</span>
+        <h3>Treppen, Reparaturen &amp; Mosaik</h3>
+        <p>Treppenfliesen aller Art, Mosaiksteinfliesen und saubere Reparaturen — auch bei kleinen Aufträgen sind wir zur Stelle.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="referenzen" id="referenzen">
+    <div class="section-head">
+      <p class="eyebrow reveal">Referenzen</p>
+      <h2 class="reveal">Arbeiten, die für uns sprechen.</h2>
+    </div>
+    <div class="ref-grid reveal">
+      <figure>
+        <img src="https://www.fliesen-isma.de/fileadmin/_processed_/7/2/csm_2561x1000_e27293581d.jpeg" alt="Modern gefliestes Badezimmer – Badsanierung Fliesen ISMA Passau" loading="lazy" />
+        <figcaption>Badsanierung · Passau</figcaption>
+      </figure>
+      <figure>
+        <img src="https://www.fliesen-isma.de/fileadmin/_processed_/8/0/csm_fliesen_2561x1000_e54ac08ae6.jpeg" alt="Präzise verlegte Bodenfliesen – Fliesenleger Passau" loading="lazy" />
+        <figcaption>Bodenverlegung · Großformat</figcaption>
+      </figure>
+      <figure>
+        <img src="https://www.fliesen-isma.de/fileadmin/_processed_/9/4/csm_terrasse_pic_0343ad081a.jpg" alt="Sanierte Terrasse mit Natursteinplatten – Terrassensanierung Niederbayern" loading="lazy" />
+        <figcaption>Terrassensanierung · Naturstein</figcaption>
+      </figure>
+    </div>
+    <p class="ref-note reveal">Über 200 weitere Projektfotos zeigen wir Ihnen gerne im persönlichen Gespräch.</p>
+  </section>
+
+  <section class="ueber" id="ueber-uns">
+    <div class="ueber-inner">
+      <p class="eyebrow reveal">Über uns</p>
+      <h2 class="reveal">Ein junges Team.<br/>Ein altes Handwerk.</h2>
+      <p class="reveal">
+        Wir sind eine junge Firma, die sich voller Elan der Fliesenverlegung widmet. Als gelernter
+        Fliesenleger mit über 17 Jahren Berufserfahrung unterstützen wir Sie als Zweierteam —
+        mit qualitativ hochwertiger, sauberer Arbeit.
+      </p>
+      <p class="reveal">
+        Unsere Kunden sind Bauträger und Privatkunden aus Passau und Umgebung. Die meisten kommen
+        über Empfehlung zu uns — darauf sind wir stolz. Vielen Dank für Ihr Vertrauen.
+      </p>
+    </div>
+  </section>
+
+  <section class="kontakt" id="kontakt">
+    <p class="eyebrow reveal">Kontakt</p>
+    <h2 class="reveal">Erzählen Sie uns von Ihrem Projekt.</h2>
+    <p class="reveal">Unverbindliche Beratung — wir melden uns innerhalb eines Werktags.</p>
+    <div class="kontakt-actions reveal">
+      <a class="btn-primary" href="tel:+491748050295">+49 174 805 02 95</a>
+      <a class="btn-secondary" href="mailto:info@fliesen-isma.de">info@fliesen-isma.de</a>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <span>Fliesen ISMA — Ihr Fliesenleger für Passau und Umgebung.</span>
+    <nav>
+      <a href="/impressum">Impressum</a>
+      <a href="/datenschutz">Datenschutz</a>
+    </nav>
+  </footer>
+
+  <script src="https://unpkg.com/lenis@1.3.21/dist/lenis.min.js"></script>
+  <script>
+    (function () {
+      "use strict";
+
+      var reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      var lenis = null;
+      if (!reduced && window.Lenis) {
+        lenis = new Lenis({ lerp: 0.08, smoothWheel: true });
+      }
+
+      var section = document.querySelector(".cinematic");
+      var video = document.getElementById("scrub-video");
+      var lines = Array.prototype.slice.call(document.querySelectorAll(".line"));
+      var fill = document.getElementById("progress-fill");
+      var hint = document.getElementById("scroll-hint");
+      var nav = document.getElementById("nav");
+
+      var duration = 0;
+      var scrollProgress = 0;
+      var videoTime = 0;
+
+      if (video) {
+        video.pause();
+        if (video.readyState >= 1) duration = video.duration || 0;
+        video.addEventListener("loadedmetadata", function () {
+          duration = video.duration || 0;
+        });
+        var unlock = function () {
+          var p = video.play();
+          if (p && p.then) {
+            p.then(function () { video.pause(); }).catch(function () {});
+          }
+          window.removeEventListener("touchstart", unlock);
+          window.removeEventListener("click", unlock);
+        };
+        window.addEventListener("touchstart", unlock, { once: true });
+        window.addEventListener("click", unlock, { once: true });
+      }
+
+      function sectionProgress() {
+        if (!section) return scrollProgress;
+        var rect = section.getBoundingClientRect();
+        var total = rect.height - window.innerHeight;
+        if (total <= 0) return scrollProgress;
+        var p = -rect.top / total;
+        return Math.max(0, Math.min(1, p));
+      }
+
+      function updateLines(p) {
+        for (var i = 0; i < lines.length; i++) {
+          var el = lines[i];
+          var tin = parseFloat(el.dataset.in || "0");
+          var tout = parseFloat(el.dataset.out || "1");
+          var span = tout - tin;
+          var local = (p - tin) / (span || 1);
+          var o = 0;
+          if (local > 0 && local < 1) {
+            o = local < 0.25 ? local / 0.25 : local > 0.75 ? (1 - local) / 0.25 : 1;
+          }
+          el.style.opacity = String(Math.max(0, Math.min(1, o)));
+        }
+      }
+
+      var frameId = null;
+      function raf(time) {
+        if (lenis) lenis.raf(time);
+
+        var p = sectionProgress();
+        scrollProgress = p;
+
+        if (video && !reduced) {
+          // 1) Kontinuierlicher Zoom per CSS (GPU, immer butterweich):
+          //    startet voll rausgezoomt (1.0) und fährt bis 1.4 rein
+          var zoom = 1 + p * 0.4;
+          video.style.transform = "scale(" + zoom.toFixed(4) + ")";
+
+          // 2) Video-Scrubbing mit leichtem Glätten obendrauf
+          if (duration > 0) {
+            var targetTime = p * Math.max(0, duration - 0.05);
+            videoTime += (targetTime - videoTime) * 0.22;
+            if (Math.abs(video.currentTime - videoTime) > 0.03) {
+              try { video.currentTime = videoTime; } catch (e) {}
+            }
+          }
+        }
+
+        updateLines(p);
+
+        if (fill) fill.style.width = (p * 100).toFixed(1) + "%";
+        if (hint) hint.style.opacity = p > 0.05 ? "0" : "1";
+        if (nav) nav.classList.toggle("scrolled", p >= 0.995 || window.scrollY > window.innerHeight * 2.2);
+
+        frameId = requestAnimationFrame(raf);
+      }
+      frameId = requestAnimationFrame(raf);
+
+      var revealEls = document.querySelectorAll(".reveal");
+      if ("IntersectionObserver" in window && !reduced) {
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("visible");
+                io.unobserve(entry.target);
+              }
+            });
+          },
+          { threshold: 0.15 }
+        );
+        revealEls.forEach(function (el) { io.observe(el); });
+      } else {
+        revealEls.forEach(function (el) { el.classList.add("visible"); });
+      }
+
+      if (lenis) {
+        document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+          a.addEventListener("click", function (e) {
+            var id = a.getAttribute("href");
+            var target = id.length > 1 ? document.querySelector(id) : document.body;
+            if (target) {
+              e.preventDefault();
+              lenis.scrollTo(target, { offset: 0 });
+            }
+          });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
