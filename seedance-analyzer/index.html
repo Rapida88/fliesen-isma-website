@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0f1a">
+<meta name="description" content="Foto oder Video hochladen, bis ins kleinste Detail analysieren lassen und einen perfekten Seedance 2.0 Video-Prompt erhalten.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Seedance Prompt Analyzer</title>
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --bg-card: #131a2a;
+    --bg-input: #0e1422;
+    --border: #243049;
+    --text: #e8ecf5;
+    --text-dim: #93a0b8;
+    --accent: #4f8cff;
+    --accent-2: #9b6bff;
+    --ok: #34d399;
+    --err: #f87171;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
+    padding-bottom: env(safe-area-inset-bottom);
+    -webkit-tap-highlight-color: transparent;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 16px 16px 48px; }
+  header { display: flex; align-items: center; gap: 12px; padding: 12px 0 20px; }
+  header img { width: 40px; height: 40px; }
+  header h1 { font-size: 1.15rem; margin: 0; line-height: 1.3; }
+  header p { margin: 2px 0 0; font-size: .8rem; color: var(--text-dim); }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .card h2 { font-size: .95rem; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  .muted { color: var(--text-dim); font-size: .82rem; line-height: 1.5; }
+
+  /* API-Key */
+  details.keybox summary {
+    cursor: pointer; font-size: .9rem; font-weight: 600;
+    display: flex; align-items: center; gap: 8px; list-style: none;
+  }
+  details.keybox summary::-webkit-details-marker { display: none; }
+  .key-status { font-size: .75rem; padding: 2px 8px; border-radius: 999px; margin-left: auto; }
+  .key-status.ok { background: rgba(52,211,153,.15); color: var(--ok); }
+  .key-status.missing { background: rgba(248,113,113,.15); color: var(--err); }
+  .keyrow { display: flex; gap: 8px; margin-top: 12px; }
+  input[type="password"], input[type="text"] {
+    flex: 1; background: var(--bg-input); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 12px; font-size: .9rem; min-width: 0;
+  }
+  input:focus { outline: none; border-color: var(--accent); }
+
+  /* Upload */
+  .drop {
+    border: 2px dashed var(--border); border-radius: var(--radius);
+    padding: 28px 16px; text-align: center; cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .drop.drag { border-color: var(--accent); background: rgba(79,140,255,.06); }
+  .drop .big { font-size: 2rem; }
+  .drop p { margin: 8px 0 0; font-size: .9rem; }
+
+  button {
+    font-family: inherit; border: none; border-radius: 12px;
+    padding: 14px 18px; font-size: .95rem; font-weight: 600; cursor: pointer;
+    color: #fff; background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    width: 100%;
+  }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.secondary { background: var(--bg-input); border: 1px solid var(--border); color: var(--text); }
+  button.small { width: auto; padding: 8px 14px; font-size: .8rem; }
+
+  .preview-media { width: 100%; border-radius: 12px; max-height: 320px; object-fit: contain; background: #000; }
+  .frames { display: flex; gap: 6px; overflow-x: auto; margin-top: 10px; padding-bottom: 4px; }
+  .frames img { height: 64px; border-radius: 6px; border: 1px solid var(--border); flex: 0 0 auto; }
+  .fileinfo { font-size: .78rem; color: var(--text-dim); margin-top: 8px; }
+
+  .status { display: flex; align-items: center; gap: 10px; font-size: .85rem; color: var(--text-dim); margin: 12px 0; }
+  .spinner {
+    width: 18px; height: 18px; border: 2.5px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%; flex: 0 0 auto;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error { background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.35); color: #fca5a5;
+    border-radius: 12px; padding: 12px; font-size: .85rem; line-height: 1.5; margin: 12px 0; }
+
+  /* Ergebnis */
+  .result { font-size: .9rem; line-height: 1.65; word-wrap: break-word; }
+  .result h2 { font-size: 1.05rem; margin: 20px 0 8px; color: var(--accent); }
+  .result h3 { font-size: .92rem; margin: 16px 0 6px; }
+  .result ul { padding-left: 20px; margin: 6px 0; }
+  .result li { margin: 3px 0; }
+  .result strong { color: #fff; }
+  .promptblock {
+    position: relative; background: #0a0e18; border: 1px solid var(--accent);
+    border-radius: 12px; padding: 14px; margin: 10px 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .82rem; white-space: pre-wrap; line-height: 1.55;
+  }
+  .copybtn {
+    position: sticky; float: right; top: 8px;
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 6px 12px; font-size: .75rem; font-weight: 600; cursor: pointer; width: auto;
+    margin: -4px -4px 6px 8px;
+  }
+  .hidden { display: none !important; }
+  .row { display: flex; gap: 10px; margin-top: 12px; }
+  .row button { flex: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <img src="icon.svg" alt="">
+    <div>
+      <h1>Seedance Prompt Analyzer</h1>
+      <p>Foto / Video &rarr; Detail-Analyse &rarr; Seedance&nbsp;2.0 Prompt</p>
+    </div>
+  </header>
+
+  <!-- API-Key -->
+  <div class="card">
+    <details class="keybox" id="keybox">
+      <summary>
+        🔑 Anthropic API-Key
+        <span class="key-status missing" id="keyStatus">fehlt</span>
+      </summary>
+      <p class="muted" style="margin-top:10px">
+        Die Analyse läuft über die Claude-API. Den Key bekommst du unter
+        <strong>platform.claude.com</strong>. Er wird nur lokal auf diesem Gerät gespeichert
+        und direkt von deinem Browser an die API gesendet — nie an andere Server.
+      </p>
+      <div class="keyrow">
+        <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off">
+        <button class="small" id="saveKey" style="width:auto">Speichern</button>
+      </div>
+    </details>
+  </div>
+
+  <!-- Upload -->
+  <div class="card" id="uploadCard">
+    <h2>1. Foto oder Video auswählen</h2>
+    <div class="drop" id="drop">
+      <div class="big">📷 🎬</div>
+      <p><strong>Tippen zum Auswählen</strong><br>
+      <span class="muted">oder Datei hierher ziehen — Foto (JPG/PNG/WebP/HEIC) oder Video (MP4/MOV/WebM)</span></p>
+    </div>
+    <input type="file" id="file" accept="image/*,video/*" class="hidden">
+  </div>
+
+  <!-- Vorschau -->
+  <div class="card hidden" id="previewCard">
+    <h2>2. Vorschau</h2>
+    <div id="previewHolder"></div>
+    <div class="frames hidden" id="frameStrip"></div>
+    <div class="fileinfo" id="fileInfo"></div>
+    <div class="row">
+      <button class="secondary" id="resetBtn">Andere Datei</button>
+      <button id="analyzeBtn">🔍 Analysieren</button>
+    </div>
+  </div>
+
+  <!-- Status / Fehler -->
+  <div class="status hidden" id="status"><div class="spinner"></div><span id="statusText"></span></div>
+  <div class="error hidden" id="error"></div>
+
+  <!-- Ergebnis -->
+  <div class="card hidden" id="resultCard">
+    <h2>3. Ergebnis</h2>
+    <div class="result" id="result"></div>
+    <div class="row">
+      <button class="secondary" id="newBtn">🔄 Neue Analyse</button>
+    </div>
+  </div>
+
+  <p class="muted" style="text-align:center">
+    Tipp: Auf dem Handy über „Zum Home-Bildschirm hinzufügen“ als App installieren.
+  </p>
+</div>
+
+<script>
+"use strict";
+
+/* ============================== Konfiguration ============================== */
+
+const API_URL = "https://api.anthropic.com/v1/messages";
+const MODEL = "claude-opus-4-8";
+const MAX_IMAGE_EDGE = 2048;   // Fotos: lange Kante
+const FRAME_EDGE = 1024;       // Video-Frames: lange Kante
+const MIN_FRAMES = 6;
+const MAX_FRAMES = 14;
+
+const SYSTEM_PROMPT = `Du bist ein Experte für Filmanalyse, Cinematographie und Prompt-Engineering für das Video-Generierungsmodell Seedance 2.0 (ByteDance). Der Nutzer lädt ein Foto oder Video hoch und möchte es mit Seedance 2.0 möglichst 1:1 nachbilden.
+
+DEINE AUFGABE (in dieser Reihenfolge, als Markdown):
+
+## 🔬 Detail-Analyse
+Analysiere das Material forensisch genau, auf Deutsch, mit diesen Unterpunkten (als fette Stichpunkte):
+- **Subjekt(e):** Wer/was ist zu sehen? Aussehen, Kleidung, Alter, Materialien, Texturen, markante Details.
+- **Aktion & Bewegung:** Was passiert genau? Bei Videos: zeitlicher Ablauf der Bewegung (Anfang → Mitte → Ende), Geschwindigkeit, Bewegungsrichtung. Subjektbewegung strikt getrennt von Kamerabewegung beschreiben.
+- **Umgebung & Setting:** Ort, Hintergrund, Vordergrund, Tageszeit, Wetter, Requisiten.
+- **Kamera:** Einstellungsgröße (Totale/Halbtotale/Nah/Detail), Perspektive/Winkel, Objektiv-Anmutung (Weitwinkel/Tele), Schärfentiefe, und bei Videos: die EINE dominante Kamerabewegung (z. B. dolly in, pan left, tracking shot, static) inkl. Tempo (slow/smooth/gentle).
+- **Licht:** Lichtquelle(n), Richtung, Härte/Weichheit, Farbtemperatur, Schatten, Stimmung. (Wichtigster Qualitätsfaktor!)
+- **Farben & Grading:** Farbpalette, Kontrast, Sättigung, Look (z. B. teal-orange, pastell, entsättigt).
+- **Stil & Medium:** Realfilm/Animation/3D, Filmkorn, Ära, Genre-Anmutung, Referenz-Ästhetik.
+- **Ton & Atmosphäre:** Stimmung, implizierte Geräusche/Musik (falls relevant).
+- Bei Videos zusätzlich: **Schnitte/Shots:** Gibt es mehrere Einstellungen? Wenn ja, jede kurz beschreiben mit ungefähren Zeitmarken.
+
+## 🎬 Seedance 2.0 Prompt
+Gib den finalen Prompt auf ENGLISCH in einem einzigen Codeblock (\`\`\`) aus. Regeln für den Prompt:
+- Struktur: Subject → Action → Environment → Camera → Lighting → Mood/Style. Ca. 60–120 Wörter bei einem einzelnen Shot.
+- Nur EINE primäre Kamerabewegung verwenden, mit Tempo-Wörtern (slow, smooth, gentle) statt technischer Parameter. Standard-Filmvokabular nutzen (dolly in/out, pan, tilt, tracking shot, crane up, arc shot, rack focus, static shot).
+- Subjektbewegung und Kamerabewegung in getrennten Sätzen beschreiben (z. B. "The dancer spins slowly. The camera holds a fixed framing.").
+- Lichtbeschreibung ausführlich und präzise — sie hat den größten Einfluss auf die Qualität.
+- Das Wort "fast" vermeiden bzw. höchstens für EIN Element verwenden; keine Kombination aus schneller Kamera + schnellen Schnitten + viel Action.
+- Wenn das Video mehrere Shots/Beats hat: Timeline-Prompting mit Zeitmarken verwenden, z. B.:
+  [0.0s–2.5s] Wide shot: ... [2.5s–5.0s] Cut to close-up: ...
+- Den Prompt mit Stil-/Qualitäts-Deskriptoren abschließen (z. B. "cinematic, photorealistic, shallow depth of field, 35mm film grain").
+- KEINE Negativ-Listen im Prompt; nur beschreiben, was zu sehen sein soll.
+
+## ⚙️ Empfohlene Einstellungen
+Kurze Liste auf Deutsch: empfohlenes Seitenverhältnis (aus dem Material abgeleitet), empfohlene Videolänge (bei Videos: tatsächliche Dauer, gerundet auf von Seedance unterstützte Längen wie 5s/10s), Auflösung (z. B. 1080p), und ob Image-to-Video (mit dem Originalfoto bzw. erstem Frame als Referenzbild) oder Text-to-Video besser geeignet ist — bei hochgeladenen Fotos fast immer Image-to-Video empfehlen.
+
+## 💡 Hinweise
+2–3 kurze Tipps auf Deutsch, was beim Nachbauen dieses konkreten Materials erfahrungsgemäß schwierig wird (z. B. Textlesbarkeit, Hände, Logos, exakte Gesichter) und wie man den Prompt iterieren sollte (immer nur ein Element pro Versuch ändern).
+
+WICHTIG: Sei extrem präzise und konkret. Keine vagen Formulierungen wie "eine Person" wenn Details erkennbar sind. Erfinde nichts, was nicht zu sehen ist — wenn etwas unklar ist (z. B. durch Unschärfe), kennzeichne es als Annahme.`;
+
+/* ============================== State & DOM ============================== */
+
+const $ = (id) => document.getElementById(id);
+const els = {
+  keybox: $("keybox"), apiKey: $("apiKey"), saveKey: $("saveKey"), keyStatus: $("keyStatus"),
+  drop: $("drop"), file: $("file"),
+  uploadCard: $("uploadCard"), previewCard: $("previewCard"), previewHolder: $("previewHolder"),
+  frameStrip: $("frameStrip"), fileInfo: $("fileInfo"),
+  analyzeBtn: $("analyzeBtn"), resetBtn: $("resetBtn"), newBtn: $("newBtn"),
+  status: $("status"), statusText: $("statusText"), error: $("error"),
+  resultCard: $("resultCard"), result: $("result"),
+};
+
+let media = null; // { kind:'image'|'video', blocks:[{b64,label}], info:{...}, objectUrl }
+
+/* ============================== API-Key ============================== */
+
+function refreshKeyStatus() {
+  const has = !!localStorage.getItem("anthropic_api_key");
+  els.keyStatus.textContent = has ? "gespeichert" : "fehlt";
+  els.keyStatus.className = "key-status " + (has ? "ok" : "missing");
+  if (!has) els.keybox.open = true;
+}
+els.saveKey.addEventListener("click", () => {
+  const v = els.apiKey.value.trim();
+  if (v) {
+    localStorage.setItem("anthropic_api_key", v);
+    els.apiKey.value = "";
+    els.keybox.open = false;
+  } else {
+    localStorage.removeItem("anthropic_api_key");
+  }
+  refreshKeyStatus();
+});
+refreshKeyStatus();
+
+/* ============================== Upload & Vorschau ============================== */
+
+els.drop.addEventListener("click", () => els.file.click());
+els.drop.addEventListener("dragover", (e) => { e.preventDefault(); els.drop.classList.add("drag"); });
+els.drop.addEventListener("dragleave", () => els.drop.classList.remove("drag"));
+els.drop.addEventListener("drop", (e) => {
+  e.preventDefault(); els.drop.classList.remove("drag");
+  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+});
+els.file.addEventListener("change", () => { if (els.file.files[0]) handleFile(els.file.files[0]); });
+els.resetBtn.addEventListener("click", resetAll);
+els.newBtn.addEventListener("click", resetAll);
+
+function resetAll() {
+  if (media?.objectUrl) URL.revokeObjectURL(media.objectUrl);
+  media = null;
+  els.file.value = "";
+  els.previewHolder.innerHTML = "";
+  els.frameStrip.innerHTML = "";
+  els.frameStrip.classList.add("hidden");
+  els.previewCard.classList.add("hidden");
+  els.resultCard.classList.add("hidden");
+  els.uploadCard.classList.remove("hidden");
+  hideStatus(); hideError();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+async function handleFile(file) {
+  hideError();
+  const isVideo = file.type.startsWith("video/");
+  const isImage = file.type.startsWith("image/");
+  if (!isVideo && !isImage) { showError("Bitte ein Foto oder Video auswählen."); return; }
+
+  showStatus(isVideo ? "Video wird gelesen, Frames werden extrahiert …" : "Foto wird verarbeitet …");
+  try {
+    media = isVideo ? await prepareVideo(file) : await prepareImage(file);
+  } catch (err) {
+    hideStatus();
+    showError("Datei konnte nicht verarbeitet werden: " + (err?.message || err) +
+      (isVideo ? " — Tipp: MP4 (H.264) funktioniert am zuverlässigsten." : ""));
+    return;
+  }
+  hideStatus();
+
+  els.previewHolder.innerHTML = "";
+  if (media.kind === "image") {
+    const img = document.createElement("img");
+    img.className = "preview-media";
+    img.src = "data:image/jpeg;base64," + media.blocks[0].b64;
+    els.previewHolder.appendChild(img);
+  } else {
+    const vid = document.createElement("video");
+    vid.className = "preview-media";
+    vid.src = media.objectUrl;
+    vid.controls = true; vid.muted = true; vid.playsInline = true;
+    els.previewHolder.appendChild(vid);
+    els.frameStrip.innerHTML = "";
+    for (const b of media.blocks) {
+      const t = document.createElement("img");
+      t.src = "data:image/jpeg;base64," + b.b64;
+      t.title = b.label;
+      els.frameStrip.appendChild(t);
+    }
+    els.frameStrip.classList.remove("hidden");
+  }
+  els.fileInfo.textContent = media.info.summary;
+  els.uploadCard.classList.add("hidden");
+  els.previewCard.classList.remove("hidden");
+  els.resultCard.classList.add("hidden");
+}
+
+/* ---------- Foto: skalieren & als JPEG kodieren ---------- */
+
+async function prepareImage(file) {
+  const bitmap = await loadBitmap(file);
+  const { canvas } = drawScaled(bitmap, MAX_IMAGE_EDGE);
+  const b64 = canvasToB64(canvas, 0.9);
+  return {
+    kind: "image",
+    blocks: [{ b64, label: "Foto" }],
+    info: {
+      width: bitmap.width, height: bitmap.height,
+      summary: `Foto · ${bitmap.width}×${bitmap.height}px · ${fmtBytes(file.size)}`,
+    },
+  };
+}
+
+function loadBitmap(file) {
+  if (window.createImageBitmap) {
+    return createImageBitmap(file).catch(() => loadViaImg(file));
+  }
+  return loadViaImg(file);
+}
+function loadViaImg(file) {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Bildformat wird nicht unterstützt")); };
+    img.src = url;
+  });
+}
+
+/* ---------- Video: Frames extrahieren ---------- */
+
+async function prepareVideo(file) {
+  const objectUrl = URL.createObjectURL(file);
+  const video = document.createElement("video");
+  video.muted = true;
+  video.playsInline = true;
+  video.preload = "auto";
+  video.src = objectUrl;
+
+  await waitEvent(video, "loadedmetadata", 15000, "Video-Metadaten konnten nicht gelesen werden");
+  // Manche Browser liefern duration erst nach kurzem Anspielen
+  if (!isFinite(video.duration) || video.duration <= 0) {
+    video.currentTime = 1e9;
+    await waitEvent(video, "seeked", 10000, "Videodauer konnte nicht ermittelt werden");
+  }
+  const duration = video.duration;
+  const w = video.videoWidth, h = video.videoHeight;
+  if (!w || !h) throw new Error("Videoformat wird von diesem Browser nicht unterstützt");
+
+  const n = Math.max(MIN_FRAMES, Math.min(MAX_FRAMES, Math.round(duration / 0.8)));
+  const blocks = [];
+  for (let i = 0; i < n; i++) {
+    // gleichmäßig verteilt, inkl. Anfang und Ende
+    const t = n === 1 ? 0 : Math.min(duration - 0.05, Math.max(0.05, (i / (n - 1)) * duration));
+    video.currentTime = t;
+    await waitEvent(video, "seeked", 10000, "Frame konnte nicht gelesen werden");
+    const { canvas } = drawScaled(video, FRAME_EDGE, w, h);
+    blocks.push({ b64: canvasToB64(canvas, 0.78), label: `Frame bei ${t.toFixed(1)}s` });
+    showStatus(`Frames werden extrahiert … ${i + 1}/${n}`);
+  }
+
+  return {
+    kind: "video",
+    blocks, objectUrl,
+    info: {
+      duration, width: w, height: h, frameCount: n,
+      summary: `Video · ${duration.toFixed(1)}s · ${w}×${h}px · ${n} Frames extrahiert · ${fmtBytes(file.size)}`,
+    },
+  };
+}
+
+function waitEvent(el, ev, timeoutMs, errMsg) {
+  return new Promise((resolve, reject) => {
+    const to = setTimeout(() => { cleanup(); reject(new Error(errMsg)); }, timeoutMs);
+    const onOk = () => { cleanup(); resolve(); };
+    const onErr = () => { cleanup(); reject(new Error(errMsg)); };
+    function cleanup() {
+      clearTimeout(to);
+      el.removeEventListener(ev, onOk);
+      el.removeEventListener("error", onErr);
+    }
+    el.addEventListener(ev, onOk, { once: true });
+    el.addEventListener("error", onErr, { once: true });
+  });
+}
+
+function drawScaled(source, maxEdge, srcW, srcH) {
+  const w = srcW || source.width || source.videoWidth;
+  const h = srcH || source.height || source.videoHeight;
+  const scale = Math.min(1, maxEdge / Math.max(w, h));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(w * scale);
+  canvas.height = Math.round(h * scale);
+  canvas.getContext("2d").drawImage(source, 0, 0, canvas.width, canvas.height);
+  return { canvas };
+}
+
+function canvasToB64(canvas, quality) {
+  return canvas.toDataURL("image/jpeg", quality).split(",")[1];
+}
+
+function fmtBytes(n) {
+  if (n > 1024 * 1024) return (n / 1024 / 1024).toFixed(1) + " MB";
+  return Math.round(n / 1024) + " KB";
+}
+
+/* ============================== Analyse (Claude API, Streaming) ============================== */
+
+els.analyzeBtn.addEventListener("click", analyze);
+
+async function analyze() {
+  const apiKey = localStorage.getItem("anthropic_api_key");
+  if (!apiKey) {
+    els.keybox.open = true;
+    showError("Bitte zuerst deinen Anthropic API-Key speichern.");
+    els.keybox.scrollIntoView({ behavior: "smooth" });
+    return;
+  }
+  if (!media) return;
+
+  hideError();
+  els.analyzeBtn.disabled = true;
+  showStatus("Claude analysiert das Material bis ins kleinste Detail … das kann 1–3 Minuten dauern.");
+  els.resultCard.classList.remove("hidden");
+  els.result.innerHTML = '<p class="muted">Warte auf Antwort …</p>';
+  els.resultCard.scrollIntoView({ behavior: "smooth" });
+
+  const content = [];
+  if (media.kind === "image") {
+    content.push({ type: "text", text:
+      "Hier ist das hochgeladene FOTO, das ich mit Seedance 2.0 als Video nachbilden möchte " +
+      `(Original: ${media.info.width}×${media.info.height}px). Analysiere es und erstelle den Prompt:` });
+    content.push(imgBlock(media.blocks[0].b64));
+  } else {
+    content.push({ type: "text", text:
+      "Hier ist das hochgeladene VIDEO als Sequenz von Einzelframes in chronologischer Reihenfolge. " +
+      `Metadaten: Dauer ${media.info.duration.toFixed(1)}s, Auflösung ${media.info.width}×${media.info.height}px, ` +
+      `${media.info.frameCount} gleichmäßig verteilte Frames. ` +
+      "Rekonstruiere daraus den Bewegungsablauf, die Kamerabewegung und eventuelle Schnitte. " +
+      "Analysiere alles und erstelle den Seedance-2.0-Prompt:" });
+    for (const b of media.blocks) {
+      content.push({ type: "text", text: b.label + ":" });
+      content.push(imgBlock(b.b64));
+    }
+  }
+
+  const body = {
+    model: MODEL,
+    max_tokens: 16000,
+    stream: true,
+    thinking: { type: "adaptive" },
+    system: SYSTEM_PROMPT,
+    messages: [{ role: "user", content }],
+  };
+
+  let text = "";
+  try {
+    const resp = await fetch(API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": apiKey,
+        "anthropic-version": "2023-06-01",
+        "anthropic-dangerous-direct-browser-access": "true",
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!resp.ok) {
+      let msg = `HTTP ${resp.status}`;
+      try { msg = (await resp.json())?.error?.message || msg; } catch (_) {}
+      throw new ApiError(resp.status, msg);
+    }
+
+    let stopReason = null;
+    for await (const event of sseEvents(resp.body)) {
+      if (event.type === "content_block_delta" && event.delta?.type === "text_delta") {
+        text += event.delta.text;
+        renderResult(text);
+      } else if (event.type === "content_block_start" && event.content_block?.type === "thinking") {
+        showStatus("Claude denkt nach …");
+      } else if (event.type === "content_block_start" && event.content_block?.type === "text") {
+        showStatus("Antwort wird geschrieben …");
+      } else if (event.type === "message_delta" && event.delta?.stop_reason) {
+        stopReason = event.delta.stop_reason;
+      } else if (event.type === "error") {
+        throw new Error(event.error?.message || "Stream-Fehler");
+      }
+    }
+
+    if (stopReason === "refusal") {
+      showError("Die Analyse wurde aus Sicherheitsgründen abgelehnt. Bitte versuche es mit anderem Material.");
+    } else if (stopReason === "max_tokens") {
+      renderResult(text);
+      showError("Die Antwort wurde abgeschnitten (Token-Limit). Der Prompt sollte trotzdem vollständig sein — sonst bitte erneut analysieren.");
+    } else {
+      renderResult(text);
+    }
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 401) {
+      showError("API-Key ungültig. Bitte Key prüfen und neu speichern.");
+      els.keybox.open = true;
+    } else if (err instanceof ApiError && err.status === 429) {
+      showError("Rate-Limit erreicht. Bitte kurz warten und erneut versuchen.");
+    } else if (err instanceof ApiError && err.status === 413) {
+      showError("Das Material ist zu groß für eine Anfrage. Bitte ein kürzeres Video oder kleineres Foto verwenden.");
+    } else {
+      showError("Fehler bei der Analyse: " + (err?.message || err));
+    }
+    if (!text) els.resultCard.classList.add("hidden");
+  } finally {
+    hideStatus();
+    els.analyzeBtn.disabled = false;
+  }
+}
+
+class ApiError extends Error {
+  constructor(status, message) { super(message); this.status = status; }
+}
+
+function imgBlock(b64) {
+  return { type: "image", source: { type: "base64", media_type: "image/jpeg", data: b64 } };
+}
+
+/* SSE-Parser für fetch-Streams */
+async function* sseEvents(stream) {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let buf = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buf += decoder.decode(value, { stream: true });
+    let idx;
+    while ((idx = buf.indexOf("\n\n")) !== -1) {
+      const chunk = buf.slice(0, idx);
+      buf = buf.slice(idx + 2);
+      for (const line of chunk.split("\n")) {
+        if (line.startsWith("data:")) {
+          const data = line.slice(5).trim();
+          if (data && data !== "[DONE]") {
+            try { yield JSON.parse(data); } catch (_) {}
+          }
+        }
+      }
+    }
+  }
+}
+
+/* ============================== Markdown-Rendering ============================== */
+
+function renderResult(md) {
+  const parts = md.split(/```/);
+  let html = "";
+  for (let i = 0; i < parts.length; i++) {
+    if (i % 2 === 1) {
+      // Codeblock = der Seedance-Prompt
+      let code = parts[i].replace(/^[a-zA-Z]*\n/, ""); // Sprach-Tag entfernen
+      html += '<div class="promptblock"><button class="copybtn" data-copy>📋 Prompt kopieren</button>' +
+              escapeHtml(code.trim()) + "</div>";
+    } else {
+      html += inlineMd(parts[i]);
+    }
+  }
+  els.result.innerHTML = html;
+  els.result.querySelectorAll("[data-copy]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const txt = btn.parentElement.textContent.replace(/^📋 Prompt kopieren/, "").trim();
+      navigator.clipboard.writeText(txt).then(() => {
+        btn.textContent = "✅ Kopiert!";
+        setTimeout(() => { btn.textContent = "📋 Prompt kopieren"; }, 1800);
+      });
+    });
+  });
+}
+
+function inlineMd(src) {
+  const lines = escapeHtml(src).split("\n");
+  let html = "", inList = false;
+  for (const raw of lines) {
+    const line = raw.trimEnd();
+    const li = line.match(/^\s*[-*]\s+(.*)$/);
+    if (li) {
+      if (!inList) { html += "<ul>"; inList = true; }
+      html += "<li>" + fmtInline(li[1]) + "</li>";
+      continue;
+    }
+    if (inList) { html += "</ul>"; inList = false; }
+    if (/^###\s+/.test(line)) html += "<h3>" + fmtInline(line.replace(/^###\s+/, "")) + "</h3>";
+    else if (/^##\s+/.test(line)) html += "<h2>" + fmtInline(line.replace(/^##\s+/, "")) + "</h2>";
+    else if (/^#\s+/.test(line)) html += "<h2>" + fmtInline(line.replace(/^#\s+/, "")) + "</h2>";
+    else if (line === "") html += "";
+    else html += "<p>" + fmtInline(line) + "</p>";
+  }
+  if (inList) html += "</ul>";
+  return html;
+}
+
+function fmtInline(s) {
+  return s
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+}
+
+function escapeHtml(s) {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+/* ============================== Status / Fehler ============================== */
+
+function showStatus(msg) { els.statusText.textContent = msg; els.status.classList.remove("hidden"); }
+function hideStatus() { els.status.classList.add("hidden"); }
+function showError(msg) { els.error.textContent = msg; els.error.classList.remove("hidden"); }
+function hideError() { els.error.classList.add("hidden"); }
+
+/* ============================== PWA ============================== */
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>
