@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Storyboard Prompt Generator – für GPT Images 2.0 &amp; Seedance 2.0</title>
+<style>
+  :root {
+    --bg: #0e1116;
+    --bg-soft: #161b23;
+    --card: #1b212b;
+    --card-hover: #222937;
+    --border: #2c3442;
+    --border-active: #6c8cff;
+    --text: #e8ecf3;
+    --text-dim: #9aa5b5;
+    --accent: #6c8cff;
+    --accent-soft: rgba(108, 140, 255, 0.12);
+    --accent-2: #ff8a5c;
+    --green: #4ade80;
+    --radius: 14px;
+    --font: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    --mono: "JetBrains Mono", "SF Mono", Consolas, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    line-height: 1.55;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse 800px 400px at 20% -5%, rgba(108,140,255,0.10), transparent),
+      radial-gradient(ellipse 700px 400px at 90% 0%, rgba(255,138,92,0.07), transparent);
+  }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  /* ---------- Header ---------- */
+  header { text-align: center; margin-bottom: 28px; }
+  .logo {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 26px; font-weight: 800; letter-spacing: -0.02em;
+  }
+  .logo .clap { font-size: 30px; }
+  .logo .grad {
+    background: linear-gradient(90deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  header p.sub { color: var(--text-dim); margin-top: 6px; font-size: 14.5px; }
+
+  .steps {
+    display: flex; justify-content: center; gap: 8px; flex-wrap: wrap;
+    margin-top: 18px; font-size: 12.5px; color: var(--text-dim);
+  }
+  .steps span.step {
+    background: var(--bg-soft); border: 1px solid var(--border);
+    padding: 6px 12px; border-radius: 999px; display: inline-flex; gap: 7px; align-items: center;
+  }
+  .steps b { color: var(--accent); font-weight: 700; }
+  .steps .arr { align-self: center; opacity: .5; }
+
+  /* ---------- Layout ---------- */
+  .grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
+  @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 22px;
+  }
+  .card + .card { margin-top: 22px; }
+
+  h2.section {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--accent); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
+  }
+  h2.section .n {
+    background: var(--accent-soft); color: var(--accent);
+    width: 22px; height: 22px; border-radius: 7px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+  }
+
+  .field { margin-bottom: 18px; }
+  .field:last-child { margin-bottom: 0; }
+  label.lbl { display: block; font-size: 13.5px; font-weight: 600; margin-bottom: 7px; }
+  label.lbl .req { color: var(--accent-2); font-weight: 700; margin-left: 3px; }
+  label.lbl .opt { color: var(--text-dim); font-weight: 400; font-size: 12px; margin-left: 5px; }
+  .hint { font-size: 12px; color: var(--text-dim); margin-top: 6px; }
+
+  input[type="text"], textarea, select {
+    width: 100%; background: var(--bg-soft); border: 1px solid var(--border);
+    color: var(--text); border-radius: 10px; padding: 11px 13px;
+    font-size: 14px; font-family: var(--font); outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  input[type="text"]:focus, textarea:focus, select:focus {
+    border-color: var(--border-active); box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+  input.invalid, .choice-grid.invalid { border-color: #e05666 !important; }
+  textarea { resize: vertical; min-height: 96px; }
+  select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239aa5b5' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 13px center; padding-right: 36px; }
+
+  /* ---------- Choice cards (radio) ---------- */
+  .choice-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; border: 1px solid transparent; border-radius: 11px; }
+  .choice-grid.cols3 { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 560px) { .choice-grid, .choice-grid.cols3 { grid-template-columns: 1fr 1fr; } }
+  .choice {
+    position: relative; cursor: pointer; user-select: none;
+    background: var(--bg-soft); border: 1px solid var(--border);
+    border-radius: 10px; padding: 11px 12px; text-align: left;
+    transition: border-color .15s, background .15s;
+  }
+  .choice:hover { background: var(--card-hover); }
+  .choice input { position: absolute; opacity: 0; pointer-events: none; }
+  .choice .c-icon { font-size: 18px; display: block; margin-bottom: 4px; }
+  .choice .c-title { font-size: 13px; font-weight: 600; display: block; }
+  .choice .c-desc { font-size: 11.5px; color: var(--text-dim); display: block; margin-top: 2px; }
+  .choice.selected { border-color: var(--border-active); background: var(--accent-soft); }
+  .choice.selected .c-title { color: var(--accent); }
+
+  /* panel shape preview boxes */
+  .shape-prev { display: inline-block; border: 2px solid currentColor; border-radius: 3px; margin-bottom: 6px; opacity: .85; }
+  .shape-sq { width: 22px; height: 22px; }
+  .shape-h  { width: 32px; height: 18px; }
+  .shape-v  { width: 16px; height: 28px; }
+
+  /* ---------- Toggle switch ---------- */
+  .toggle-row {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+    padding: 12px 14px; background: var(--bg-soft); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 10px; cursor: pointer; transition: border-color .15s;
+  }
+  .toggle-row:hover { border-color: #3a4456; }
+  .toggle-row .t-text { flex: 1; }
+  .toggle-row .t-title { font-size: 13.5px; font-weight: 600; }
+  .toggle-row .t-desc { font-size: 12px; color: var(--text-dim); margin-top: 2px; }
+  .switch { position: relative; flex-shrink: 0; width: 42px; height: 24px; margin-top: 2px; }
+  .switch input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; margin: 0; }
+  .switch .track {
+    position: absolute; inset: 0; background: #313b4c; border-radius: 999px; transition: background .18s;
+  }
+  .switch .thumb {
+    position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+    background: #fff; border-radius: 50%; transition: transform .18s;
+  }
+  .switch input:checked ~ .track { background: var(--accent); }
+  .switch input:checked ~ .track .thumb { transform: translateX(18px); }
+
+  /* ---------- Slider ---------- */
+  .slider-row { display: flex; align-items: center; gap: 16px; }
+  input[type="range"] {
+    flex: 1; -webkit-appearance: none; appearance: none; height: 6px;
+    background: linear-gradient(to right, var(--accent) var(--fill, 0%), #313b4c var(--fill, 0%));
+    border-radius: 999px; outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%;
+    background: #fff; border: 3px solid var(--accent); cursor: pointer;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: #fff; border: 3px solid var(--accent); cursor: pointer;
+  }
+  .slider-val {
+    min-width: 64px; text-align: center; font-weight: 700; font-size: 15px;
+    background: var(--accent-soft); color: var(--accent);
+    border-radius: 9px; padding: 7px 10px;
+  }
+
+  .conditional { overflow: hidden; transition: max-height .25s ease, opacity .25s ease, margin-top .25s ease; max-height: 0; opacity: 0; margin-top: 0; }
+  .conditional.open { max-height: 240px; opacity: 1; margin-top: 10px; }
+
+  /* ---------- Output ---------- */
+  .out-col { position: sticky; top: 20px; }
+  @media (max-width: 980px) { .out-col { position: static; } }
+  .out-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+  .out-head h2 { font-size: 15px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .out-actions { display: flex; gap: 8px; }
+  button.btn {
+    font-family: var(--font); font-size: 13px; font-weight: 600; cursor: pointer;
+    border-radius: 9px; padding: 9px 15px; border: 1px solid var(--border);
+    background: var(--bg-soft); color: var(--text); transition: all .15s;
+    display: inline-flex; align-items: center; gap: 7px;
+  }
+  button.btn:hover { background: var(--card-hover); border-color: #3a4456; }
+  button.btn.primary { background: var(--accent); border-color: var(--accent); color: #0e1116; }
+  button.btn.primary:hover { filter: brightness(1.1); }
+  button.btn.copied { background: var(--green); border-color: var(--green); color: #0e1116; }
+
+  .prompt-box {
+    background: var(--bg-soft); border: 1px solid var(--border); border-radius: 11px;
+    padding: 16px; font-family: var(--mono); font-size: 12.5px; line-height: 1.6;
+    white-space: pre-wrap; word-break: break-word; max-height: 640px; overflow-y: auto;
+    color: #cdd6e4;
+  }
+  .prompt-box::-webkit-scrollbar { width: 9px; }
+  .prompt-box::-webkit-scrollbar-thumb { background: #313b4c; border-radius: 99px; }
+
+  .placeholder-msg {
+    text-align: center; color: var(--text-dim); padding: 52px 18px; font-size: 13.5px;
+    border: 1px dashed var(--border); border-radius: 11px;
+  }
+  .placeholder-msg .big { font-size: 34px; display: block; margin-bottom: 10px; }
+
+  .meta-pills { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 13px; }
+  .pill {
+    font-size: 11.5px; color: var(--text-dim); background: var(--bg-soft);
+    border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px;
+  }
+  .pill b { color: var(--text); font-weight: 600; }
+
+  .tip {
+    margin-top: 14px; font-size: 12.5px; color: var(--text-dim);
+    background: var(--accent-soft); border: 1px solid rgba(108,140,255,.25);
+    border-radius: 10px; padding: 11px 13px;
+  }
+  .tip b { color: var(--accent); }
+
+  footer { text-align: center; margin-top: 44px; color: var(--text-dim); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo"><span class="clap">🎬</span><span>Storyboard <span class="grad">Prompt Generator</span></span></div>
+    <p class="sub">Erzeugt Claude-Prompts für GPT&nbsp;Images&nbsp;2.0 – Storyboards als Referenz für Seedance&nbsp;2.0</p>
+    <div class="steps">
+      <span class="step"><b>1</b> Formular ausfüllen</span><span class="arr">→</span>
+      <span class="step"><b>2</b> Prompt kopieren</span><span class="arr">→</span>
+      <span class="step"><b>3</b> In Claude einfügen</span><span class="arr">→</span>
+      <span class="step"><b>4</b> Bilder mit GPT Images 2.0 erzeugen &amp; in Seedance 2.0 referenzieren</span>
+    </div>
+  </header>
+
+  <div class="grid">
+
+    <!-- ============ LEFT: FORM ============ -->
+    <div>
+
+      <div class="card">
+        <h2 class="section"><span class="n">1</span> Projekt</h2>
+
+        <div class="field">
+          <label class="lbl" for="title">Titel des Storyboards<span class="req">*</span></label>
+          <input type="text" id="title" placeholder="z. B. „Der letzte Leuchtturmwärter“" maxlength="120">
+          <div class="toggle-row" style="margin-top:10px; margin-bottom:0;">
+            <div class="t-text">
+              <div class="t-title">Titel im Storyboard anzeigen</div>
+              <div class="t-desc">Der Titel wird als Kopfzeile auf dem Storyboard-Blatt eingeblendet</div>
+            </div>
+            <span class="switch"><input type="checkbox" id="showTitle" checked><span class="track"><span class="thumb"></span></span></span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="lbl">Format des Videos<span class="req">*</span></label>
+          <div class="choice-grid" id="formatGrid">
+            <label class="choice"><input type="radio" name="format" value="Story-basiert (narratives Kurzvideo mit dramaturgischem Bogen)"><span class="c-icon">📖</span><span class="c-title">Story-basiert</span><span class="c-desc">Erzählung mit Spannungsbogen</span></label>
+            <label class="choice"><input type="radio" name="format" value="CM-/Werbe-basiert (Commercial / Werbespot mit klarer Produkt- bzw. Markenbotschaft)"><span class="c-icon">📢</span><span class="c-title">CM / Werbung</span><span class="c-desc">Spot mit Marken-Botschaft</span></label>
+            <label class="choice"><input type="radio" name="format" value="Bildungs-/Erklär-basiert (Lern- bzw. Erklärvideo, das ein Thema verständlich vermittelt)"><span class="c-icon">🎓</span><span class="c-title">Bildung / Erklärung</span><span class="c-desc">Wissen verständlich vermitteln</span></label>
+            <label class="choice"><input type="radio" name="format" value="Informationsvermittlung-basiert (News-, Report- oder Informationsvideo mit Fakten im Fokus)"><span class="c-icon">📰</span><span class="c-title">Information</span><span class="c-desc">Fakten &amp; Nachrichten</span></label>
+            <label class="choice"><input type="radio" name="format" value="Unterhaltungs-basiert (unterhaltsames Video, z. B. Comedy, Challenge oder Vlog-Stil)"><span class="c-icon">🎉</span><span class="c-title">Unterhaltung</span><span class="c-desc">Comedy, Challenge, Vlog …</span></label>
+            <label class="choice"><input type="radio" name="format" value="Kunst-/Ausdrucks-basiert (künstlerisches, experimentelles oder atmosphärisches Video)"><span class="c-icon">🎨</span><span class="c-title">Kunst / Ausdruck</span><span class="c-desc">Experimentell &amp; atmosphärisch</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="section"><span class="n">2</span> Story</h2>
+
+        <div class="field">
+          <label class="lbl" for="overview">Story-Übersicht <span class="opt">(optional – leer lassen, damit Claude eine Story aus Titel &amp; Format entwickelt)</span></label>
+          <textarea id="overview" placeholder="Worum geht es? Wer kommt vor? Was passiert am Anfang, in der Mitte, am Ende? &#10;Stichpunkte genügen – Claude arbeitet sie aus."></textarea>
+          <div class="conditional" id="improveWrap">
+            <div class="toggle-row" style="margin-bottom:0;">
+              <div class="t-text">
+                <div class="t-title">✨ Story-Übersicht von Claude verbessern lassen</div>
+                <div class="t-desc">Claude überarbeitet Dramaturgie, Klarheit und visuelles Erzählen, bevor die Panels geplant werden</div>
+              </div>
+              <span class="switch"><input type="checkbox" id="improveStory" checked><span class="track"><span class="thumb"></span></span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="lbl" for="characters">Charaktere &amp; Setting <span class="opt">(optional, empfohlen für konsistente Figuren)</span></label>
+          <textarea id="characters" style="min-height:72px" placeholder="z. B. „Mira, 28, kurze rote Haare, gelber Regenmantel – Schauplatz: stürmische Felsküste, Dämmerung“"></textarea>
+          <div class="hint">Je genauer die Figurenbeschreibung, desto konsistenter erscheinen die Charaktere über alle Panels hinweg.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="section"><span class="n">3</span> Look &amp; Stil</h2>
+
+        <div class="field">
+          <label class="lbl">Stil<span class="req">*</span></label>
+          <div class="choice-grid" id="styleGrid">
+            <label class="choice selected"><input type="radio" name="style" value="Anime (japanische hochwertige Animation)" checked><span class="c-icon">🌸</span><span class="c-title">Anime (Japan)</span><span class="c-desc">Hochwertige japanische Animation</span></label>
+            <label class="choice"><input type="radio" name="style" value="Anime (Pixar-Stil, hochwertiges 3D-CG)"><span class="c-icon">🧸</span><span class="c-title">Anime (Pixar-Stil)</span><span class="c-desc">Stilisiertes 3D im Pixar-Look</span></label>
+            <label class="choice"><input type="radio" name="style" value="Live-Action (fotorealistisch, filmische Realaufnahme-Optik)"><span class="c-icon">🎥</span><span class="c-title">Live-Action</span><span class="c-desc">Fotorealistisch, filmisch</span></label>
+            <label class="choice"><input type="radio" name="style" value="__custom__"><span class="c-icon">✏️</span><span class="c-title">Sonstiges</span><span class="c-desc">Eigenen Stil eintragen</span></label>
+          </div>
+          <div class="conditional" id="customStyleWrap">
+            <input type="text" id="customStyle" placeholder="z. B. „Aquarell-Illustration“, „Stop-Motion-Look“, „Cyberpunk-Comic“ …">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="section"><span class="n">4</span> Panels</h2>
+
+        <div class="field">
+          <label class="lbl" for="panelCount">Anzahl der Panels</label>
+          <div class="slider-row">
+            <input type="range" id="panelCount" min="4" max="20" value="8" step="1">
+            <span class="slider-val" id="panelCountVal">8</span>
+          </div>
+          <div class="hint" id="sheetHint"></div>
+        </div>
+
+        <div class="field">
+          <label class="lbl">Form der Panels</label>
+          <div class="choice-grid cols3" id="shapeGrid">
+            <label class="choice"><input type="radio" name="shape" value="square"><span class="shape-prev shape-sq"></span><span class="c-title">Quadratisch</span><span class="c-desc">1:1</span></label>
+            <label class="choice selected"><input type="radio" name="shape" value="horizontal" checked><span class="shape-prev shape-h"></span><span class="c-title">Horizontal</span><span class="c-desc">16:9 – Querformat-Video</span></label>
+            <label class="choice"><input type="radio" name="shape" value="vertical"><span class="shape-prev shape-v"></span><span class="c-title">Vertikal</span><span class="c-desc">9:16 – Hochformat-Video</span></label>
+          </div>
+          <div class="hint">💡 Wähle die Form passend zum Seitenverhältnis des späteren Seedance-Videos.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="section"><span class="n">5</span> Optionen</h2>
+
+        <label class="toggle-row">
+          <div class="t-text">
+            <div class="t-title">Nummern in Panels einfügen</div>
+            <div class="t-desc">Jedes Panel erhält eine gut sichtbare Nummer (1, 2, 3 …) in der oberen linken Ecke</div>
+          </div>
+          <span class="switch"><input type="checkbox" id="optNumbers" checked><span class="track"><span class="thumb"></span></span></span>
+        </label>
+
+        <label class="toggle-row">
+          <div class="t-text">
+            <div class="t-title">Detaillierte Infos in Panels einfügen</div>
+            <div class="t-desc">Unter jedem Panel werden <b>Aktion</b>, <b>Kameraführung</b> und <b>Dialog</b> angegeben</div>
+          </div>
+          <span class="switch"><input type="checkbox" id="optDetails" checked><span class="track"><span class="thumb"></span></span></span>
+        </label>
+
+        <div class="conditional" id="dialogLangWrap" style="margin-bottom:10px;">
+          <label class="lbl" for="dialogLang" style="font-weight:500; font-size:12.5px; color:var(--text-dim);">Sprache der Dialoge &amp; Beschriftungen im Bild</label>
+          <select id="dialogLang">
+            <option value="Deutsch" selected>Deutsch</option>
+            <option value="Englisch">Englisch</option>
+            <option value="Japanisch">Japanisch</option>
+            <option value="keine Dialoge">Keine Dialoge (nur Aktion &amp; Kamera)</option>
+          </select>
+        </div>
+
+        <label class="toggle-row" style="margin-bottom:0;">
+          <div class="t-text">
+            <div class="t-title">Charakterbogen einbeziehen</div>
+            <div class="t-desc">Zusätzlicher Prompt für ein Character-Sheet (Turnaround, Mimik, Farbpalette) – ideal als Konsistenz-Referenz</div>
+          </div>
+          <span class="switch"><input type="checkbox" id="optCharSheet"><span class="track"><span class="thumb"></span></span></span>
+        </label>
+      </div>
+
+    </div>
+
+    <!-- ============ RIGHT: OUTPUT ============ -->
+    <div class="out-col">
+      <div class="card">
+        <div class="out-head">
+          <h2>🪄 Generierter Claude-Prompt</h2>
+          <div class="out-actions">
+            <button class="btn" id="btnDownload" title="Als .txt-Datei herunterladen">⬇ .txt</button>
+            <button class="btn primary" id="btnCopy">📋 Kopieren</button>
+          </div>
+        </div>
+
+        <div class="meta-pills" id="metaPills"></div>
+
+        <div id="outputArea">
+          <div class="placeholder-msg" id="placeholderMsg">
+            <span class="big">🎬</span>
+            Fülle <b>Titel</b> und <b>Videoformat</b> aus –<br>der Prompt wird hier live generiert.
+          </div>
+          <div class="prompt-box" id="promptBox" style="display:none;"></div>
+        </div>
+
+        <div class="tip">
+          <b>Tipp:</b> Prompt in Claude einfügen → Claude liefert fertige GPT-Images-2.0-Prompts.
+          Die generierten Storyboard-Bilder lädst du anschließend in Seedance&nbsp;2.0 als visuelle Referenz hoch.
+          Erzeuge den Charakterbogen <b>zuerst</b> und referenziere ihn bei den Storyboard-Blättern für maximale Konsistenz.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>Storyboard Prompt Generator · für GPT Images 2.0 → Seedance 2.0 Workflows</footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const $ = (id) => document.getElementById(id);
+
+  const els = {
+    title: $("title"),
+    showTitle: $("showTitle"),
+    overview: $("overview"),
+    improveWrap: $("improveWrap"),
+    improveStory: $("improveStory"),
+    characters: $("characters"),
+    customStyleWrap: $("customStyleWrap"),
+    customStyle: $("customStyle"),
+    panelCount: $("panelCount"),
+    panelCountVal: $("panelCountVal"),
+    sheetHint: $("sheetHint"),
+    optNumbers: $("optNumbers"),
+    optDetails: $("optDetails"),
+    dialogLangWrap: $("dialogLangWrap"),
+    dialogLang: $("dialogLang"),
+    optCharSheet: $("optCharSheet"),
+    promptBox: $("promptBox"),
+    placeholderMsg: $("placeholderMsg"),
+    metaPills: $("metaPills"),
+    btnCopy: $("btnCopy"),
+    btnDownload: $("btnDownload"),
+    formatGrid: $("formatGrid"),
+  };
+
+  /* ---------- choice-card highlighting ---------- */
+  document.querySelectorAll(".choice-grid").forEach((grid) => {
+    grid.addEventListener("change", () => {
+      grid.querySelectorAll(".choice").forEach((c) => {
+        c.classList.toggle("selected", c.querySelector("input").checked);
+      });
+      update();
+    });
+  });
+
+  /* ---------- helpers ---------- */
+  const radioVal = (name) => {
+    const r = document.querySelector(`input[name="${name}"]:checked`);
+    return r ? r.value : null;
+  };
+
+  const SHAPES = {
+    square:     { label: "quadratisch (Seitenverhältnis 1:1)",   short: "1:1",  perSheet: 9, cols: 3 },
+    horizontal: { label: "horizontal (Seitenverhältnis 16:9)",   short: "16:9", perSheet: 6, cols: 2 },
+    vertical:   { label: "vertikal (Seitenverhältnis 9:16)",     short: "9:16", perSheet: 8, cols: 4 },
+  };
+
+  function sheetPlan(count, shapeKey) {
+    const s = SHAPES[shapeKey];
+    const sheets = Math.ceil(count / s.perSheet);
+    const base = Math.ceil(count / sheets);
+    const plan = [];
+    let start = 1;
+    for (let i = 0; i < sheets; i++) {
+      const n = Math.min(base, count - (start - 1));
+      plan.push({ from: start, to: start + n - 1, count: n });
+      start += n;
+    }
+    const cols = Math.min(s.cols, base);
+    const rows = Math.ceil(base / cols);
+    return { sheets, plan, cols, rows };
+  }
+
+  /* ---------- prompt builder ---------- */
+  function buildPrompt() {
+    const title = els.title.value.trim();
+    const format = radioVal("format");
+    if (!title || !format) return null;
+
+    const showTitle = els.showTitle.checked;
+    const overview = els.overview.value.trim();
+    const improve = els.improveStory.checked;
+    const characters = els.characters.value.trim();
+
+    let style = radioVal("style");
+    if (style === "__custom__") {
+      const c = els.customStyle.value.trim();
+      style = c ? c : "Sonstiges (vom Nutzer nicht näher beschrieben – wähle einen zum Format passenden Stil und benenne ihn)";
+    }
+
+    const count = parseInt(els.panelCount.value, 10);
+    const shapeKey = radioVal("shape");
+    const shape = SHAPES[shapeKey];
+    const { sheets, plan, cols, rows } = sheetPlan(count, shapeKey);
+
+    const numbers = els.optNumbers.checked;
+    const details = els.optDetails.checked;
+    const dialogLang = els.dialogLang.value;
+    const charSheet = els.optCharSheet.checked;
+
+    const L = [];
+
+    L.push("Du bist ein erfahrener Storyboard-Artist und Prompt-Engineer für die Bildgenerierungs-KI „GPT Images 2.0“.");
+    L.push("");
+    L.push("# Aufgabe");
+    L.push("Erstelle auf Basis der folgenden Projektdaten fertige, direkt verwendbare Bildgenerierungs-Prompts für GPT Images 2.0. Die Prompts sollen ein professionelles Storyboard erzeugen, das anschließend der Videogenerierungs-KI „Seedance 2.0“ als visuelle Referenz dient. Jedes Panel muss daher eine eindeutige Bildkomposition, klare Kameraperspektive und lesbare Bewegungslogik von Panel zu Panel haben.");
+    L.push("");
+    L.push("# Projektdaten");
+    L.push(`- Titel: „${title}“`);
+    L.push(`- Titel im Storyboard sichtbar: ${showTitle ? "Ja – als Kopfzeile oben auf jedem Blatt" : "Nein – Titel nicht im Bild anzeigen"}`);
+    L.push(`- Videoformat: ${format}`);
+    L.push(`- Visueller Stil: ${style}`);
+    L.push(`- Anzahl der Panels: ${count}`);
+    L.push(`- Panel-Form: ${shape.label}`);
+    L.push(`- Panel-Nummerierung: ${numbers ? "Ja – jede Panel-Nummer gut sichtbar in der oberen linken Ecke des Panels" : "Nein – keine Nummern in den Panels"}`);
+    L.push(`- Detailangaben pro Panel: ${details ? `Ja – unter jedem Panel drei kurze Zeilen: AKTION, KAMERA, DIALOG (Sprache: ${dialogLang})` : "Nein – nur die reinen Bilder, keine Textzeilen unter den Panels"}`);
+    L.push(`- Charakterbogen: ${charSheet ? "Ja – zusätzlich einen separaten Prompt für ein Character-Sheet erstellen" : "Nein"}`);
+    if (characters) {
+      L.push(`- Charaktere & Setting (Vorgabe des Nutzers): ${characters}`);
+    }
+    L.push("");
+
+    L.push("# Story");
+    if (overview) {
+      L.push("Vom Nutzer vorgegebene Story-Übersicht:");
+      L.push(`„${overview}“`);
+      if (improve) {
+        L.push("");
+        L.push("Verbessere diese Story-Übersicht zuerst: Schärfe die Dramaturgie (Anfang – Mitte – Ende), erhöhe die Klarheit und denke in visuell erzählbaren Momenten. Behalte die Kernidee des Nutzers bei. Gib die verbesserte Fassung kurz aus, bevor du die Panels planst.");
+      } else {
+        L.push("");
+        L.push("Übernimm diese Story-Übersicht unverändert als Grundlage für die Panel-Planung.");
+      }
+    } else {
+      L.push("Es wurde keine Story-Übersicht angegeben. Entwickle zuerst selbst eine prägnante, visuell erzählbare Story, die zu Titel und Videoformat passt, und fasse sie in 3–5 Sätzen zusammen, bevor du die Panels planst.");
+    }
+    L.push("");
+
+    L.push("# Vorgehen");
+    let step = 1;
+    L.push(`${step++}. ${overview ? (improve ? "Story-Übersicht verbessern und kurz ausgeben." : "Story-Übersicht kurz rekapitulieren.") : "Story entwickeln und kurz ausgeben."}`);
+    L.push(`${step++}. Die Story in genau ${count} Panels mit klarem dramaturgischen Bogen aufteilen (Establishing Shot zu Beginn, Höhepunkt, Auflösung am Ende).`);
+    L.push(`${step++}. Für jedes Panel festlegen: Bildinhalt/Komposition, Kameraeinstellung (z. B. Totale, Halbtotale, Nahaufnahme, Over-Shoulder), Kamerabewegung bzw. Bewegungsrichtung der Figuren${details ? ` sowie eine kurze Dialog- oder Soundzeile (${dialogLang})` : ""}.`);
+    if (charSheet) {
+      L.push(`${step++}. Einen eigenen GPT-Images-2.0-Prompt für den Charakterbogen erstellen (siehe Abschnitt „Charakterbogen“).`);
+    }
+    L.push(`${step++}. Daraus die finalen GPT-Images-2.0-Prompts formulieren (siehe „Anforderungen“ und „Ausgabeformat“).`);
+    L.push("");
+
+    L.push("# Anforderungen an die Bild-Prompts");
+    if (sheets === 1) {
+      L.push(`- Das Storyboard ist EIN Gesamtbild: ein sauberes Raster mit ${count} Panels (ca. ${cols} Spalten × ${rows} Reihen), jedes Panel im Format ${shape.short}.`);
+    } else {
+      L.push(`- Bei ${count} Panels im Format ${shape.short} wird das Storyboard auf ${sheets} Blätter verteilt, damit jedes Panel groß und detailliert genug für die Seedance-Referenz bleibt:`);
+      plan.forEach((p, i) => {
+        L.push(`  - Blatt ${i + 1}: Panels ${p.from}–${p.to} (${p.count} Panels, Raster ca. ${Math.min(cols, p.count)} Spalten)`);
+      });
+      L.push("- Erstelle pro Blatt einen eigenen, in sich vollständigen GPT-Images-2.0-Prompt. Wiederhole in jedem Blatt-Prompt dieselben Stil- und Charakterbeschreibungen wortgleich, damit alle Blätter konsistent aussehen.");
+    }
+    L.push("- Layout: weißer bzw. neutraler Hintergrund, dünne schwarze Panel-Rahmen, gleichmäßige Abstände, klassisches professionelles Storyboard-Sheet.");
+    if (showTitle) {
+      L.push(`- Kopfzeile: Der Titel „${title}“ steht gut lesbar oben auf ${sheets === 1 ? "dem Blatt" : "jedem Blatt"}${sheets > 1 ? " (plus Blattnummer, z. B. „1/" + sheets + "“)" : ""}.`);
+    } else {
+      L.push("- Kein Titel und keine Kopfzeile im Bild.");
+    }
+    if (numbers) {
+      L.push("- Jedes Panel trägt seine fortlaufende Nummer deutlich sichtbar in der oberen linken Ecke (kleines Quadrat oder Kreis).");
+    }
+    if (details) {
+      L.push(`- Unter jedem Panel stehen drei kurze, im Bild lesbare Beschriftungszeilen (${dialogLang}): „AKTION: …“, „KAMERA: …“, „DIALOG: …“. Halte jede Zeile unter ca. 8 Wörtern, damit GPT Images 2.0 den Text sauber rendert.`);
+    } else {
+      L.push("- Keine Beschriftungen oder Textzeilen unter den Panels – die Bilder sprechen für sich.");
+    }
+    L.push(`- Durchgängiger Stil: ${style}. Charaktere, Farbpalette, Lichtstimmung und Linienführung müssen über alle Panels identisch bleiben (Beschreibungen in jedem Prompt wortgleich wiederholen).`);
+    L.push("- Für die Seedance-Referenz: pro Panel genau EINE klare Aktion, eindeutige Blick- und Bewegungsrichtungen, abwechslungsreiche, aber filmisch logische Kameraeinstellungen (180-Grad-Regel beachten).");
+    L.push("- Keine Wasserzeichen, keine Collage-Effekte, keine sich überlappenden Panels.");
+    L.push("");
+
+    if (charSheet) {
+      L.push("# Charakterbogen");
+      L.push(`- Erstelle zusätzlich einen separaten GPT-Images-2.0-Prompt für ein Character-Sheet der Hauptfigur(en)${characters ? " gemäß der Nutzer-Vorgabe oben" : ""}.`);
+      L.push("- Inhalt des Sheets: Turnaround (Vorderansicht, Seitenansicht, Rückansicht), 3–4 Gesichtsausdrücke, typische Pose, Farbpalette mit Farbfeldern; Name der Figur als Beschriftung; gleicher Stil wie das Storyboard.");
+      L.push("- Hinweis an den Nutzer im Output: Dieses Sheet zuerst generieren und als Bildreferenz für die Storyboard-Blätter sowie für Seedance 2.0 verwenden.");
+      L.push("");
+    }
+
+    L.push("# Ausgabeformat");
+    let o = 1;
+    L.push(`${o++}. **Story-Übersicht** – ${overview ? (improve ? "die verbesserte Fassung" : "kurze Rekapitulation") : "die von dir entwickelte Story"} (3–5 Sätze).`);
+    L.push(`${o++}. **Panel-Liste** – Tabelle mit ${count} Zeilen: Nr. | Bildinhalt | Kamera${details ? " | Dialog" : ""}.`);
+    if (charSheet) {
+      L.push(`${o++}. **Charakterbogen-Prompt** – ein Codeblock, direkt kopierbar.`);
+    }
+    L.push(`${o++}. **Storyboard-Prompt${sheets > 1 ? "s" : ""}** – ${sheets > 1 ? `${sheets} Codeblöcke (einer pro Blatt)` : "ein Codeblock"}, direkt in GPT Images 2.0 kopierbar. Formuliere die Bild-Prompts auf Englisch (das liefert in Bildgeneratoren die zuverlässigsten Ergebnisse)${details ? `, aber halte die im Bild sichtbaren Beschriftungen/Dialoge auf ${dialogLang}` : ""}.`);
+    L.push(`${o++}. **Seedance-Hinweis** – 2–3 Sätze, wie die fertigen Bilder in Seedance 2.0 als Referenz eingesetzt werden (Reihenfolge, Bild-zu-Video-Hinweise pro Panel).`);
+    L.push("");
+    L.push("Wenn dir für ein stimmiges Storyboard entscheidende Informationen fehlen, triff sinnvolle Annahmen und kennzeichne sie kurz – stelle keine Rückfragen.");
+
+    return {
+      text: L.join("\n"),
+      meta: { count, sheets, shapeShort: shape.short, style, charSheet, details, numbers },
+    };
+  }
+
+  /* ---------- UI update ---------- */
+  function update() {
+    // slider fill + value
+    const pc = els.panelCount;
+    const pct = ((pc.value - pc.min) / (pc.max - pc.min)) * 100;
+    pc.style.setProperty("--fill", pct + "%");
+    els.panelCountVal.textContent = pc.value;
+
+    // sheet hint
+    const shapeKey = radioVal("shape") || "horizontal";
+    const sp = sheetPlan(parseInt(pc.value, 10), shapeKey);
+    els.sheetHint.textContent = sp.sheets === 1
+      ? "→ passt auf 1 Storyboard-Blatt (ein Gesamtbild)"
+      : `→ wird auf ${sp.sheets} Blätter verteilt, damit die Panels für Seedance groß genug bleiben`;
+
+    // conditionals
+    els.improveWrap.classList.toggle("open", els.overview.value.trim().length > 0);
+    els.customStyleWrap.classList.toggle("open", radioVal("style") === "__custom__");
+    els.dialogLangWrap.classList.toggle("open", els.optDetails.checked);
+
+    // validation styling
+    const titleOk = els.title.value.trim().length > 0;
+    const formatOk = !!radioVal("format");
+    els.title.classList.toggle("invalid", !titleOk && document.activeElement !== els.title && touched.title);
+    els.formatGrid.classList.toggle("invalid", !formatOk && touched.format);
+
+    // output
+    const result = buildPrompt();
+    if (result) {
+      els.placeholderMsg.style.display = "none";
+      els.promptBox.style.display = "block";
+      els.promptBox.textContent = result.text;
+      const m = result.meta;
+      els.metaPills.innerHTML =
+        `<span class="pill"><b>${m.count}</b> Panels</span>` +
+        `<span class="pill"><b>${m.sheets}</b> Blatt/Blätter</span>` +
+        `<span class="pill">Panel <b>${m.shapeShort}</b></span>` +
+        `<span class="pill">${escapeHtml(m.style.split("(")[0].trim())}</span>` +
+        (m.numbers ? `<span class="pill">Nummern ✓</span>` : "") +
+        (m.details ? `<span class="pill">Details ✓</span>` : "") +
+        (m.charSheet ? `<span class="pill">Charakterbogen ✓</span>` : "");
+    } else {
+      els.placeholderMsg.style.display = "block";
+      els.promptBox.style.display = "none";
+      els.metaPills.innerHTML = "";
+    }
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  }
+
+  const touched = { title: false, format: false };
+  els.title.addEventListener("blur", () => { touched.title = true; update(); });
+  els.formatGrid.addEventListener("change", () => { touched.format = true; });
+
+  /* ---------- copy & download ---------- */
+  els.btnCopy.addEventListener("click", async () => {
+    const result = buildPrompt();
+    if (!result) {
+      touched.title = true; touched.format = true;
+      update();
+      els.btnCopy.textContent = "⚠ Pflichtfelder fehlen";
+      setTimeout(() => { els.btnCopy.innerHTML = "📋 Kopieren"; }, 1800);
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(result.text);
+    } catch (e) {
+      const ta = document.createElement("textarea");
+      ta.value = result.text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      ta.remove();
+    }
+    els.btnCopy.classList.add("copied");
+    els.btnCopy.textContent = "✓ Kopiert!";
+    setTimeout(() => {
+      els.btnCopy.classList.remove("copied");
+      els.btnCopy.innerHTML = "📋 Kopieren";
+    }, 1800);
+  });
+
+  els.btnDownload.addEventListener("click", () => {
+    const result = buildPrompt();
+    if (!result) {
+      touched.title = true; touched.format = true;
+      update();
+      return;
+    }
+    const safe = els.title.value.trim().replace(/[^\wäöüÄÖÜß\- ]/g, "").replace(/\s+/g, "_").slice(0, 60) || "storyboard";
+    const blob = new Blob([result.text], { type: "text/plain;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `storyboard-prompt_${safe}.txt`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  /* ---------- live updates ---------- */
+  document.querySelectorAll("input, textarea, select").forEach((el) => {
+    el.addEventListener("input", update);
+    el.addEventListener("change", update);
+  });
+
+  update();
+})();
+</script>
+</body>
+</html>
