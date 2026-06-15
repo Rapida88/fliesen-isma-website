@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#050505" />
+<meta name="description" content="Seedance 2.0 Prompt Architect — a reusable meta-prompt and interactive builder that turns any idea into a cinematic, production-ready Seedance 2.0 video prompt." />
+<title>Seedance 2.0 — Prompt Architect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --void: #050505;
+    --panel: rgba(255,255,255,0.04);
+    --panel-bright: rgba(255,255,255,0.07);
+    --border: rgba(255,255,255,0.10);
+    --border-bright: rgba(255,255,255,0.16);
+    --text: #ffffff;
+    --dim: rgba(255,255,255,0.55);
+    --faint: rgba(255,255,255,0.35);
+    --chartreuse: #dfff4f;
+    --serif: "Instrument Serif", Georgia, serif;
+    --sans: "Inter", system-ui, sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+  body {
+    background: var(--void);
+    color: var(--text);
+    font-family: var(--sans);
+    font-weight: 300;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  ::selection { background: var(--chartreuse); color: var(--void); }
+  ::-webkit-scrollbar { width: 10px; }
+  ::-webkit-scrollbar-track { background: var(--void); }
+  ::-webkit-scrollbar-thumb { background: #222; border-radius: 5px; border: 2px solid var(--void); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--chartreuse); }
+
+  a { color: inherit; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+
+  /* ---- ambient glow ---- */
+  .glow {
+    position: fixed; border-radius: 9999px; filter: blur(120px);
+    pointer-events: none; z-index: 0; opacity: 0.18;
+  }
+  .glow.a { width: 520px; height: 520px; top: -160px; left: -120px; background: #f72585; }
+  .glow.b { width: 460px; height: 460px; bottom: -180px; right: -120px; background: #22d3ee; }
+
+  /* ---- header ---- */
+  header { position: relative; z-index: 1; padding-top: 64px; }
+  .brand {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 13px; letter-spacing: .22em;
+  }
+  .brand .dot { width: 30px; height: 30px; border-radius: 8px; background: var(--chartreuse);
+    display: grid; place-items: center; color: var(--void); font-weight: 600; }
+  .brand .slash { color: var(--chartreuse); }
+  .kicker { font-family: var(--mono); font-size: 11px; letter-spacing: .4em; color: var(--chartreuse); margin-top: 48px; }
+  h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(2.6rem, 6vw, 5rem); line-height: 1.02; letter-spacing: -.01em; margin: 14px 0 0; }
+  h1 em { font-style: italic; color: var(--chartreuse); }
+  .lede { max-width: 640px; margin-top: 18px; color: var(--dim); font-size: 16px; }
+
+  /* ---- tabs ---- */
+  .tabs { position: relative; z-index: 1; display: flex; gap: 8px; flex-wrap: wrap; margin-top: 44px; }
+  .tab {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .12em;
+    padding: 10px 18px; border-radius: 999px; cursor: pointer;
+    border: 1px solid var(--border); color: var(--dim); background: transparent;
+    transition: all .25s ease;
+  }
+  .tab:hover { border-color: var(--border-bright); color: var(--text); }
+  .tab.active { background: var(--chartreuse); color: var(--void); border-color: var(--chartreuse); box-shadow: 0 0 24px rgba(223,255,79,.3); }
+
+  /* ---- panels ---- */
+  .view { position: relative; z-index: 1; display: none; margin: 36px 0 100px; }
+  .view.active { display: block; animation: fade .5s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 24px; backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+  }
+
+  /* builder layout */
+  .grid { display: grid; gap: 22px; grid-template-columns: 1fr; }
+  @media (min-width: 920px) { .grid { grid-template-columns: 0.95fr 1.05fr; align-items: start; } }
+
+  .form { padding: 26px; }
+  .field { margin-bottom: 18px; }
+  .field > label { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .25em; color: var(--faint); margin-bottom: 8px; }
+  textarea, input[type=text], select {
+    width: 100%; background: rgba(0,0,0,.35); color: var(--text);
+    border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px;
+    font-family: var(--sans); font-size: 14px; font-weight: 300; outline: none;
+    transition: border-color .25s ease, box-shadow .25s ease;
+  }
+  textarea { min-height: 88px; resize: vertical; line-height: 1.5; }
+  textarea:focus, input:focus, select:focus { border-color: var(--chartreuse); box-shadow: 0 0 0 3px rgba(223,255,79,.12); }
+  select { appearance: none; cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23dfff4f' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 14px center; padding-right: 38px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .refs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .chk { display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: var(--dim); cursor: pointer;
+    padding: 9px 11px; border: 1px solid var(--border); border-radius: 10px; transition: all .2s ease; }
+  .chk:hover { border-color: var(--border-bright); color: var(--text); }
+  .chk input { accent-color: var(--chartreuse); width: 15px; height: 15px; }
+  .chk.on { border-color: rgba(223,255,79,.4); color: var(--text); background: rgba(223,255,79,.06); }
+
+  .actions { display: flex; gap: 10px; margin-top: 22px; flex-wrap: wrap; }
+  .btn {
+    font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer;
+    padding: 13px 22px; border-radius: 999px; border: 1px solid transparent; transition: all .25s ease;
+  }
+  .btn.primary { background: var(--chartreuse); color: var(--void); }
+  .btn.primary:hover { box-shadow: 0 0 40px rgba(223,255,79,.45); }
+  .btn.ghost { background: transparent; border-color: var(--border); color: var(--dim); }
+  .btn.ghost:hover { border-color: var(--border-bright); color: var(--text); }
+
+  /* output */
+  .out { padding: 0; overflow: hidden; }
+  .out .bar { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+  .out .bar .name { font-family: var(--mono); font-size: 10px; letter-spacing: .25em; color: var(--faint); }
+  .copy {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .12em; cursor: pointer;
+    padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border); color: var(--dim); background: transparent; transition: all .25s ease;
+  }
+  .copy:hover { border-color: rgba(223,255,79,.5); color: var(--chartreuse); }
+  .copy.done { color: var(--chartreuse); border-color: rgba(223,255,79,.5); }
+  .out pre {
+    margin: 0; padding: 22px; background: rgba(0,0,0,.4);
+    font-family: var(--mono); font-size: 13px; line-height: 1.85; color: rgba(255,255,255,.85);
+    white-space: pre-wrap; word-break: break-word; min-height: 320px;
+  }
+  .out pre .b { color: var(--chartreuse); }
+  .hint { font-family: var(--mono); font-size: 10px; letter-spacing: .2em; color: var(--faint); padding: 14px 20px; border-top: 1px solid var(--border); display: flex; justify-content: space-between; }
+
+  /* system prompt view */
+  .doc { padding: 30px; }
+  .doc p { color: var(--dim); max-width: 720px; }
+  .doc h3 { font-family: var(--serif); font-weight: 400; font-size: 2rem; margin: 6px 0 4px; }
+  .sys { margin-top: 22px; }
+
+  /* showcase */
+  .examples { display: grid; gap: 18px; grid-template-columns: 1fr; }
+  @media (min-width: 760px) { .examples { grid-template-columns: 1fr 1fr; } }
+  .ex { padding: 22px; }
+  .ex .tagline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .ex .cap { font-family: var(--mono); font-size: 10px; letter-spacing: .25em; color: var(--chartreuse); }
+  .ex h4 { font-family: var(--serif); font-weight: 400; font-size: 1.7rem; margin: 8px 0 10px; }
+  .ex .body { font-family: var(--mono); font-size: 12px; line-height: 1.8; color: rgba(255,255,255,.72); white-space: pre-wrap; }
+  .ex .body .b { color: var(--chartreuse); }
+  .ex .foot { margin-top: 16px; display: flex; gap: 10px; }
+  .ex .skill { font-family: var(--mono); font-size: 10px; letter-spacing: .15em; color: var(--faint); border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; }
+
+  footer { position: relative; z-index: 1; border-top: 1px solid var(--border); padding: 30px 0; color: var(--faint); font-family: var(--mono); font-size: 11px; letter-spacing: .15em; }
+  footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+</style>
+</head>
+<body>
+  <div class="glow a"></div>
+  <div class="glow b"></div>
+
+  <header>
+    <div class="wrap">
+      <span class="brand"><span class="dot">▶</span> PROMPT<span class="slash">/</span>CINEMA</span>
+      <p class="kicker">SEEDANCE 2.0 · PROMPT ARCHITECT</p>
+      <h1>A prompt that writes <em>prompts</em>.</h1>
+      <p class="lede">Feed it any subject, idea, genre or half-formed thought. It returns one production-ready Seedance 2.0 prompt — engineered around the model's most impressive tricks: single-shot continuous takes, frozen time, accurate physics, consistent characters, lip-synced dialogue, style transfer and impossible camera moves.</p>
+
+      <div class="tabs">
+        <button class="tab active" data-tab="builder">⌬ PROMPT BUILDER</button>
+        <button class="tab" data-tab="system">⌘ THE META-PROMPT</button>
+        <button class="tab" data-tab="showcase">★ 10 SHOWCASE PROMPTS</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================== BUILDER ===================== -->
+  <section class="view active" data-view="builder">
+    <div class="wrap">
+      <div class="grid">
+        <!-- form -->
+        <div class="card form">
+          <div class="field">
+            <label>YOUR IDEA · SUBJECT · DESCRIPTION</label>
+            <textarea id="idea" placeholder="e.g. a lone samurai facing a thunderstorm on a cliff / a perfume bottle made of liquid gold / my dog as a superhero">a lone astronaut floating outside a space station, reaching toward a passing comet</textarea>
+          </div>
+          <div class="field">
+            <label>SETTING / ENVIRONMENT (optional)</label>
+            <input type="text" id="setting" placeholder="leave blank to let the architect choose" />
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>GENRE</label>
+              <select id="genre"></select>
+            </div>
+            <div class="field">
+              <label>MOTION</label>
+              <select id="motion"></select>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>CAMERA</label>
+              <select id="camera"></select>
+            </div>
+            <div class="field">
+              <label>LIGHTING</label>
+              <select id="lighting"></select>
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label>STYLE / FINISH</label>
+              <select id="style"></select>
+            </div>
+            <div class="field">
+              <label>ASPECT RATIO</label>
+              <select id="aspect"></select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>ATTACH REFERENCES (inserts markers where needed)</label>
+            <div class="refs" id="refs"></div>
+          </div>
+
+          <div class="actions">
+            <button class="btn primary" id="gen">Generate prompt</button>
+            <button class="btn ghost" id="surprise">⤬ Surprise me</button>
+            <button class="btn ghost" id="copyReq">Copy as LLM request</button>
+          </div>
+        </div>
+
+        <!-- output -->
+        <div class="card out">
+          <div class="bar">
+            <span class="name" id="outName">PROMPT.TXT — SEEDANCE 2.0</span>
+            <button class="copy" id="copyOut">COPY</button>
+          </div>
+          <pre id="output"></pre>
+          <div class="hint"><span id="charCount">0 CHARS</span><span>ONE CONTINUOUS SHOT</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SYSTEM PROMPT ===================== -->
+  <section class="view" data-view="system">
+    <div class="wrap">
+      <div class="card doc">
+        <p class="kicker" style="margin-top:0;color:var(--chartreuse)">THE REUSABLE META-PROMPT</p>
+        <h3>Paste this once. Use it forever.</h3>
+        <p>Drop the block below into the system prompt (or the first message) of any capable chat model — Claude, GPT, Gemini. From then on, give it any subject, idea or genre and it returns a fully-formed Seedance 2.0 prompt in the exact style of the 10 showcase examples, complete with <strong style="color:var(--chartreuse);font-weight:500">[@image&nbsp;N]</strong> / <strong style="color:var(--chartreuse);font-weight:500">[@audio&nbsp;N]</strong> / <strong style="color:var(--chartreuse);font-weight:500">[@video&nbsp;N]</strong> reference markers placed exactly where a reference is needed.</p>
+
+        <div class="card out sys">
+          <div class="bar">
+            <span class="name">SEEDANCE_PROMPT_ARCHITECT.md</span>
+            <button class="copy" id="copySys">COPY META-PROMPT</button>
+          </div>
+          <pre id="sysText"></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SHOWCASE ===================== -->
+  <section class="view" data-view="showcase">
+    <div class="wrap">
+      <div class="examples" id="examples"></div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <span>PROMPT / CINEMA — SEEDANCE 2.0 PROMPT ARCHITECT</span>
+      <span>ONE PROMPT · ONE CONTINUOUS SHOT</span>
+    </div>
+  </footer>
+
+<script>
+/* ============================================================
+   DATA
+   ============================================================ */
+
+const SYSTEM_PROMPT = `You are SEEDANCE PROMPT ARCHITECT — an elite cinematographer and prompt engineer for the Seedance 2.0 text-to-video model. Your sole job is to convert ANY input the user gives you (a subject, an idea, a genre, a mood, or a loose one-line description) into ONE single, production-ready Seedance 2.0 prompt that exploits the model's most impressive capabilities:
+• single-shot CONTINUOUS takes (no cuts)
+• FROZEN-TIME / bullet-time (the world stops, only the camera moves)
+• physically accurate PHYSICS (fluids, fire, shattering, destruction)
+• CONSISTENT characters across the whole shot
+• lip-synced DIALOGUE and synced audio
+• reference-driven STYLE TRANSFER
+• seamless MORPHS and transformations
+• extreme CAMERA choreography (FPV dives, orbits, dolly-zooms, crane reveals)
+• massive-SCALE crowds and environments
+
+OUTPUT FORMAT — return ONLY the finished prompt, written as one tight paragraph of bracketed blocks in this exact order. Fill every block with vivid, concrete, filmable detail. Omit the optional blocks when they don't apply.
+
+[Subject: who/what is in frame — describe faces, wardrobe, materials, expression, count]. [Action: precisely what happens, beat by beat]. [Environment: location, time of day, weather, atmosphere]. [Camera: one deliberate, motivated move — orbit, dolly-zoom, FPV dive, crane reveal, Steadicam, push-in]. [Lighting: key/fill/rim, colour, contrast, mood]. [Audio: ambience, sound design, music or dialogue]  (OPTIONAL — only when sound matters). [VFX/Physics: simulation, transformation, particles, scale]  (OPTIONAL — only when effects matter). [Style: aesthetic, film stock, grade, lens character].
+
+Then a final line of technical tags tuned to the idea, e.g.: "Single continuous shot, smooth motion, stable framing, 24fps, 8K." Swap in the right tags (frozen-time, slow-motion, speed ramp, seamless morph, no cuts, etc.).
+
+RULES
+1. ONE continuous shot by default. Never describe edits or cuts unless the user explicitly asks for them.
+2. The camera is the storyteller — always give it a single, motivated, named move.
+3. Be specific. Replace every vague word with concrete imagery: name colours, materials, time of day, lens feel, emotion and micro-detail (a tear, a bead of sweat, fabric weave, dust motes).
+4. FROZEN TIME: when the idea calls for stillness or bullet-time, write "absolute zero motion from any element" in [Action] and make the camera the ONLY thing that moves.
+5. REFERENCES: whenever the idea needs a specific likeness, brand, artwork, real location, particular voice, or existing footage, insert a numbered reference marker EXACTLY where it is used:
+   • [@image N] — a face, product, logo, artwork/style, or real location
+   • [@audio N] — a voice for lip-sync, or a music/score track
+   • [@video N] — footage to extend, continue, or restyle
+   Number each type independently, in order of first appearance, and keep the numbering consistent across the prompt.
+6. Keep it to ONE cinematic paragraph of blocks — not a bullet list of keywords.
+7. Honour the requested genre's conventions (palette, pacing, lighting) but always push for the single most visually impressive interpretation.
+8. If the user gives almost nothing, make bold, tasteful cinematic choices on their behalf. Never ask clarifying questions — just deliver the prompt.
+
+After the prompt, on a new line, add nothing else. Output the prompt only.`;
+
+const EXAMPLES = [
+  {
+    cap: "01 — FROZEN TIME / BULLET-TIME",
+    title: "Frozen Ascension",
+    skills: ["Frozen time", "Character ref", "Style ref"],
+    body: `[Subject: a lone street dancer in a translucent silver windbreaker suspended mid-backflip above a Shibuya crossing, surrounded by hundreds of frozen commuters in colourful raincoats, stopped taxis with glowing headlights, ten thousand individual raindrops hanging like glass beads, and a flock of pigeons locked mid-flight; the dancer's face matches [@image 1]]. [Action: every element holds in absolute zero motion — not a single drop, hair or fabric fold moves]. [Environment: the Shibuya scramble at blue-hour twilight, towering neon billboards reflecting in wet asphalt, soft volumetric fog between buildings]. [Camera: a high-energy bullet-time orbit spiralling 360° around the airborne dancer, then a dolly-zoom outward revealing the full frozen crossing, weaving between suspended raindrops]. [Lighting: neon magenta and cyan key, deep teal shadows, a rim light catching every droplet]. [Style: hyper-realistic anamorphic, dramatic high-contrast grade, palette referenced from [@image 2]]. Single continuous shot, smooth camera, stable framing, 24fps, 8K.`
+  },
+  {
+    cap: "02 — CONTINUOUS ONE-TAKE",
+    title: "The Unbroken Hour",
+    skills: ["One-take", "Time morph", "No cuts"],
+    body: `[Subject: a young woman in a red wool coat walking forward at a steady pace, holding a paper coffee cup, never breaking stride]. [Action: one unbroken take follows her from behind and arcs to her face; as she walks, the world seamlessly transitions through four seasons and from dawn to night with no cut]. [Environment: a tree-lined Parisian boulevard — spring cherry blossom gives way to green summer, falling autumn leaves, then settling snow on the same branches; café awnings, cyclists and pedestrians populate every season]. [Camera: a gliding Steadicam orbiting from a tracking back-shot to a frontal close-up and back, perfectly stabilised]. [Lighting: continuous time-of-day shift — pink dawn, hard noon, golden hour, blue streetlamp night]. [Audio: city ambience evolving with each season, distant church bells, soft footsteps]. [Style: photoreal, Kodak Portra warmth, gentle film grain]. One continuous shot, no cuts, seamless season morph, stable framing.`
+  },
+  {
+    cap: "03 — PERFORMANCE + LIP-SYNC",
+    title: "The Audition",
+    skills: ["Dialogue", "Audio ref", "Micro-expression"],
+    body: `[Subject: a weathered 60-year-old actor with silver stubble and tired blue eyes, alone under a single work light on an empty theatre stage, delivering a monologue to camera; identity and wardrobe from [@image 1]]. [Action: a full emotional arc — quiet and controlled, voice cracking, a tear forming, building to trembling intensity, then collapsing to a whisper; lips synced precisely to the supplied voice track]. [Dialogue: lip-synced to [@audio 1] — a melancholic monologue about a life of missed chances]. [Environment: a vast dark empty theatre, rows of red velvet seats dissolving into black, dust motes drifting in the light beam]. [Camera: a slow 90-second push-in from a wide stage shot to an intimate close-up holding on his eyes]. [Lighting: single hard top light, deep chiaroscuro, a catchlight in each eye]. [Style: cinematic film-noir contrast, photoreal skin with visible pores and moisture]. Single continuous take, natural breathing, stable framing.`
+  },
+  {
+    cap: "04 — CONSISTENT MULTI-CHARACTER",
+    title: "Reunion",
+    skills: ["Identity lock", "3 refs", "Crowd react"],
+    body: `[Subject: three estranged siblings reuniting at an airport arrivals gate — an older brother in a leather jacket [@image 1], a sister with curly auburn hair pulling a suitcase [@image 2], and a younger brother in a grey hoodie [@image 3]; every face and outfit stays perfectly consistent throughout]. [Action: the sister spots her brothers, drops her suitcase and runs; they collide into a three-way embrace, laughing and crying, the eldest lifting the youngest off the ground while travellers smile around them]. [Environment: a bright modern international arrivals hall, glass walls, flight boards, families holding welcome signs]. [Camera: a sweeping crane descending from a high wide establishing shot into a circling mid-shot around the embracing trio]. [Lighting: bright naturalistic daylight through glass, soft shadows]. [Audio: airport ambience, overlapping joyful dialogue, distant PA announcements]. [Style: warm photoreal commercial cinematography, shallow depth of field]. Single continuous shot, consistent identity, smooth motion, stable framing.`
+  },
+  {
+    cap: "05 — PHYSICS & DESTRUCTION",
+    title: "Tidal Collapse",
+    skills: ["Fluid sim", "Destruction", "IMAX scale"],
+    body: `[Subject: a 30-metre rogue wave crashing through the glass façade of a coastal skyscraper lobby, sweeping marble furniture, a grand piano and shattering panes into a churning torrent]. [Action: physically accurate water — the wave buckles the glass, explodes inward in millions of droplets, debris tumbles with real mass and buoyancy, foam and secondary splashes break against pillars]. [Environment: a luxurious hotel lobby with marble floors, gold fixtures and a curved glass wall facing a storm-black ocean]. [Camera: a low tracking shot racing ahead of the advancing water, then craning up as the wave overtakes frame]. [Lighting: cold storm daylight, lightning strobing through spray, caustics dancing on the ceiling]. [VFX/Physics: full fluid dynamics, shattering glass, rigid-body debris, foam and mist particles]. [Audio: thunderous roar, glass shatter, deep sub-bass impact]. [Style: blockbuster disaster realism, IMAX scale, ultra-detailed 8K water]. Single continuous shot, slow-motion at impact ramping to real-time, stable framing.`
+  },
+  {
+    cap: "06 — INFINITE SCALE ZOOM",
+    title: "Powers of Ten",
+    skills: ["Continuous zoom", "Scale morph", "Deep focus"],
+    body: `[Subject: a single dewdrop on a blade of grass at sunrise — the starting point of an infinite continuous zoom-out]. [Action: one unbroken pull-back — from the macro dewdrop to a meadow, a valley, a continent, the curve of Earth, the Moon's orbit, the solar system, a spiral arm of the Milky Way, and finally the cosmic web of galaxies; every scale transition seamless]. [Environment: progresses from a misty dawn meadow to low Earth orbit to deep intergalactic space]. [Camera: a relentless, perfectly smooth continuous dolly-out keeping the subject centred, no cuts]. [Lighting: warm sunrise giving way to the hard sunlight of orbit, then the deep black and starlight of space]. [VFX: scientifically inspired scale, volumetric nebulae, realistic planetary detail]. [Style: awe-inspiring documentary realism, Cosmos aesthetic, ultra-deep focus]. One continuous unbroken shot, seamless scale transitions, stable framing, 8K.`
+  },
+  {
+    cap: "07 — STYLE TRANSFER",
+    title: "Painted in Motion",
+    skills: ["Style ref", "Coherent motion", "Aerial"],
+    body: `[Subject: a herd of wild horses galloping across a shallow river at sunset, manes and water spray flying]. [Action: a powerful naturalistic gallop, muscles flexing, hooves throwing sheets of glittering water, the herd weaving as a single organism]. [Environment: a wide river delta at golden hour, distant mountains, tall grass swaying]. [Camera: a fast aerial tracking shot flying alongside the herd at water level, then craning up to a sweeping overhead]. [Lighting: warm backlit golden hour, long shadows, glowing spray]. [Style: render every frame in the exact painterly aesthetic of [@image 1] — thick impressionist brushstrokes, its colour palette and canvas texture applied throughout while motion stays fluid and coherent and the horse anatomy remains accurate]. Single continuous shot, smooth motion, consistent style transfer, stable framing.`
+  },
+  {
+    cap: "08 — MORPH / TRANSFORMATION",
+    title: "Metamorphosis",
+    skills: ["Seamless morph", "Particle sim", "360° orbit"],
+    body: `[Subject: a woman standing in a void who transforms through five forms — flesh, then cracking porcelain, then swirling liquid mercury, then a flock of black birds, then dispersing golden sand]. [Action: a continuous seamless morph cycle, each state flowing organically into the next as she holds a slow graceful turn; the birds scatter and reform, the sand reassembles into flesh to loop]. [Environment: an infinite matte-black void with a single soft spotlight and faint floating particles]. [Camera: a slow 360° orbit that completes exactly as the morph cycle completes]. [Lighting: a dramatic single-source spotlight, specular highlights on mercury and porcelain]. [VFX: organic morphing, particle swarms of birds and sand, fluid-metal simulation]. [Style: high-fashion surrealism, Nick Knight aesthetic, hyper-detailed textures]. Single continuous shot, seamless transformations, stable framing.`
+  },
+  {
+    cap: "09 — EXTREME CAMERA",
+    title: "The Drop",
+    skills: ["FPV drone", "No cuts", "Horizon lock"],
+    body: `[Subject: a lone freerider on a mountain bike launching off a cliff-edge ramp on a Utah red-rock spine]. [Action: the rider drops in; an FPV drone chases inches behind the rear wheel, dives off the cliff with him, spirals around the airborne rider, threads a narrow slot canyon and bursts out over a vast desert vista — all in one breathless take]. [Environment: dramatic red sandstone canyons, dusty trails, deep blue sky, distant mesas]. [Camera: a single continuous high-speed FPV drone shot — diving, rolling, proximity-weaving, then a smooth reveal pull-out; aggressive yet fluid]. [Lighting: harsh high-noon desert sun, crisp shadows, dust glittering in the light]. [Audio: roaring wind, tyre on rock, the whir of the drone, an adrenaline-pulse score]. [Style: GoPro-meets-cinema realism, ultra-wide, crisp 8K, motion blur on speed]. Single continuous shot, dynamic camera, horizon lock, no cuts.`
+  },
+  {
+    cap: "10 — MASSIVE SCALE + EMOTION",
+    title: "The Last Anthem",
+    skills: ["Crowd sim", "Synced audio", "Crane → aerial"],
+    body: `[Subject: a 90,000-seat stadium at a concert climax, a lone silhouetted singer on a vast stage [@image 1], a sea of phone-lights swaying in unison]. [Action: the singer raises an arm and the crowd erupts — tens of thousands rising with arms up, confetti cannons firing, pyrotechnics igniting along the stage in time with the music as the camera reveals the staggering scale]. [Environment: a night-time open-air stadium, towering LED screens, lasers cutting haze, a city skyline beyond the rim]. [Camera: a soaring continuous crane-and-drone move from a tight close-up on the singer, pulling back and rising to a breathtaking aerial of the full stadium]. [Lighting: synchronised concert lighting, lasers, a warm spotlight on the singer, a phone-light starfield]. [Audio: a swelling anthem synced to [@audio 1], a roaring crowd, the boom of pyrotechnics]. [Style: epic music-film realism, rich colour, lens flares, 8K detail]. Single continuous shot, massive crowd simulation, synced audio, stable framing.`
+  }
+];
+
+/* ----- builder option libraries ----- */
+const GENRES = {
+  "Cinematic":   { env: "an atmospheric, story-rich location with depth and mood", light: "motivated cinematic lighting with deep shadows", vfx: "", style: "hyper-realistic cinematic, anamorphic, rich filmic grade" },
+  "Frozen Time": { env: "a busy, detail-packed scene caught in a single instant", light: "dramatic rim light catching every suspended particle", vfx: "thousands of individual elements suspended perfectly still", style: "hyper-realistic, high-contrast bullet-time grade" },
+  "Action":      { env: "a kinetic, high-stakes location full of motion and debris", light: "hard high-contrast light, sparks and dust in the air", vfx: "debris, sparks, impact dust and motion energy", style: "blockbuster realism, ultra-wide, crisp 8K, speed motion blur" },
+  "Sci-Fi":      { env: "a vast futuristic environment of scale and strange light", light: "cold volumetric light, glowing emissive surfaces", vfx: "holograms, energy fields, atmospheric volumetrics", style: "Denis Villeneuve scale, IMAX 70mm look, deep cinematic grade" },
+  "Documentary": { env: "a real, naturalistic location observed honestly", light: "available natural light, soft and true to time of day", vfx: "", style: "photoreal documentary realism, BBC Earth clarity, deep focus" },
+  "Commercial":  { env: "a clean, premium hero environment built around the subject", light: "controlled studio lighting with a single dramatic key", vfx: "pristine reflections, slow-motion product physics", style: "ultra-premium product cinematography, glossy 8K detail" },
+  "Fashion":     { env: "a surreal, sculptural set stripped to pure form and light", light: "bold beauty light, strobing or single-source drama", vfx: "fabric and material in impossible motion", style: "high-fashion surrealism, Nick Knight aesthetic, hyper-detail" },
+  "Horror":      { env: "a dread-soaked, claustrophobic place wrapped in darkness", light: "low-key darkness with a single trembling source", vfx: "creeping shadow, fog, subtle wrongness", style: "A24 horror realism, desaturated grade, unsettling stillness" },
+  "Fantasy":     { env: "a mythic, otherworldly landscape of impossible beauty", light: "magical volumetric god-rays and glowing particles", vfx: "magic, embers, floating particles, ethereal energy", style: "epic fantasy realism, painterly grade, sweeping scale" },
+  "Music Video": { env: "a stylised, rhythm-driven stage of colour and light", light: "saturated performance lighting, lasers and haze", vfx: "synced light bursts and particles", style: "bold music-film look, rich colour, lens flares, 8K" }
+};
+
+const MOTIONS = {
+  "Single continuous shot": { action: "unfolds in one unbroken, naturalistic take with fluid, motivated movement", tag: "Single continuous shot, no cuts, smooth motion" },
+  "Frozen time (bullet-time)": { action: "holds in absolute zero motion — not a single drop, hair or fabric fold moves — while time stands completely still and the camera alone travels through the frozen instant", tag: "Frozen time, the camera is the only moving element, stable framing" },
+  "Slow-motion": { action: "plays out in exquisite high-frame-rate slow motion, every detail, droplet and particle hanging in the air", tag: "High-speed slow-motion, 1000fps feel, smooth motion" },
+  "Speed ramp": { action: "ramps from languid slow-motion into a sudden burst of real-time speed and back, punctuating the key beat", tag: "Dynamic speed ramping, smooth motion, stable framing" },
+  "Seamless morph": { action: "transforms through a continuous, seamless morph — each state flowing organically into the next with no cut", tag: "Seamless morph transitions, one continuous shot, stable framing" },
+  "One-take through time": { action: "is carried in one unbroken take while the world around it seamlessly shifts through time of day and seasons without a single cut", tag: "One continuous shot, seamless time morph, no cuts" }
+};
+
+const CAMERAS = {
+  "Auto (match genre)": "",
+  "Bullet-time orbit": "a high-energy bullet-time orbit spiralling 360° around the subject, weaving between every element",
+  "Dolly-zoom": "a dramatic dolly-zoom that warps perspective while holding the subject locked in frame",
+  "FPV drone dive": "a single continuous high-speed FPV drone shot — diving, rolling and proximity-weaving before a smooth reveal pull-out",
+  "Crane reveal": "a sweeping crane move descending from a high wide establishing shot into an intimate circling mid-shot",
+  "Steadicam tracking": "a gliding Steadicam that tracks and arcs around the subject, perfectly stabilised",
+  "Slow push-in": "a slow, deliberate push-in from a wide shot to an intimate close-up",
+  "Sweeping aerial": "a sweeping aerial tracking shot flying alongside the subject, then craning up to a breathtaking overhead",
+  "360° orbit": "a smooth 360° orbit circling the subject in one unbroken arc"
+};
+
+const LIGHTS = {
+  "Auto (match genre)": "",
+  "Golden hour": "warm backlit golden-hour light, long shadows, glowing atmosphere",
+  "Blue-hour neon": "blue-hour twilight washed in neon magenta and cyan, reflections on wet surfaces",
+  "Hard noon": "harsh high-noon sun, crisp hard shadows, brilliant clarity",
+  "Chiaroscuro spotlight": "a single hard source carving deep chiaroscuro shadows, a catchlight in the eyes",
+  "Storm daylight": "cold storm daylight with lightning strobing through the air",
+  "Candlelit warm": "soft warm candle- and firelight, a flickering amber glow with gentle falloff",
+  "Bioluminescent": "ethereal bioluminescent glow, cool emissive light pulsing in darkness"
+};
+
+const STYLES = {
+  "Auto (match genre)": "",
+  "Hyper-realistic cinematic": "hyper-realistic cinematic, anamorphic lens character, rich filmic grade",
+  "Anamorphic film": "anamorphic widescreen, horizontal lens flares, 35mm film grain",
+  "Painterly / impressionist": "a painterly impressionist aesthetic, visible brushstrokes, fluid coherent motion",
+  "IMAX blockbuster": "IMAX 70mm blockbuster scale, deep cinematic grade, immense detail",
+  "Film noir": "high-contrast film-noir, deep blacks, dramatic single-source light",
+  "Documentary realism": "photoreal documentary realism, natural colour, deep focus",
+  "High-fashion surreal": "high-fashion surrealism, sculptural light, hyper-detailed textures",
+  "Dreamy 16mm": "dreamy nostalgic 16mm, soft halation, Kodak Portra palette"
+};
+
+const ASPECTS = ["16:9 (cinematic)", "2.39:1 (anamorphic)", "9:16 (vertical / social)", "1:1 (square)"];
+
+const REFS = [
+  { id:"char",   type:"image", label:"Character / likeness",   place:"subject", text:"the central figure's face and wardrobe match" },
+  { id:"product",type:"image", label:"Product / brand / logo", place:"subject", text:"the product matches exactly" },
+  { id:"location",type:"image",label:"Real location",          place:"env",     text:"the location matches" },
+  { id:"styleimg",type:"image",label:"Style / artwork",        place:"style",   text:"the entire aesthetic, palette and texture referenced from" },
+  { id:"voice",  type:"audio", label:"Voice for lip-sync",     place:"audio",   text:"dialogue lip-synced precisely to" },
+  { id:"music",  type:"audio", label:"Music / score",          place:"audio",   text:"action synced to the track" },
+  { id:"vidext", type:"video", label:"Video to extend",        place:"cont",    text:"continues and extends the footage in" },
+  { id:"vidstyle",type:"video",label:"Video to restyle",       place:"style",   text:"restyled from the footage in" }
+];
+
+const SURPRISES = [
+  "a Bengal tiger made entirely of swirling galaxy stardust prowling through a temple",
+  "a chef plating a dessert that defies gravity, ingredients floating into place",
+  "two sword-fighters frozen mid-clash as sparks hang in the air",
+  "a vintage car dissolving into a flock of metallic butterflies",
+  "a violinist playing on a melting glacier as the ice reforms behind her",
+  "a child's paper boat growing into a full-scale ship on a stormy sea",
+  "a cyberpunk street vendor in the rain, neon steam rising from the grill",
+  "a ballerina dancing inside a snow globe as the snow freezes mid-fall"
+];
+
+/* ============================================================
+   RENDER + LOGIC
+   ============================================================ */
+const $ = (s) => document.querySelector(s);
+const highlight = (t) => t.replace(/(\[[^\]]+:)/g, '<span class="b">$1</span>')
+                          .replace(/(\[@(?:image|audio|video) \d+\])/g, '<span class="b">$1</span>');
+
+function fillSelect(el, obj, isArray) {
+  const keys = isArray ? obj : Object.keys(obj);
+  el.innerHTML = keys.map(k => `<option value="${k}">${k}</option>`).join("");
+}
+
+function buildRefs() {
+  $("#refs").innerHTML = REFS.map(r =>
+    `<label class="chk" data-id="${r.id}"><input type="checkbox" value="${r.id}"> ${r.label} <span style="color:var(--faint);font-family:var(--mono);font-size:9px">@${r.type}</span></label>`
+  ).join("");
+  $("#refs").querySelectorAll(".chk").forEach(c => {
+    const box = c.querySelector("input");
+    box.addEventListener("change", () => c.classList.toggle("on", box.checked));
+  });
+}
+
+function clean(s){ return (s||"").trim().replace(/\.+$/,""); }
+
+function generate() {
+  const idea = clean($("#idea").value) || "a striking, cinematic subject";
+  const settingRaw = clean($("#setting").value);
+  const g = GENRES[$("#genre").value];
+  const m = MOTIONS[$("#motion").value];
+  const camChosen = CAMERAS[$("#camera").value] || "a deliberate, motivated camera move with smooth, fluid motion";
+  const light = LIGHTS[$("#lighting").value] || g.light;
+  const style = STYLES[$("#style").value] || g.style;
+  const aspect = $("#aspect").value;
+
+  // collect references with independent per-type numbering
+  const counters = { image:0, audio:0, video:0 };
+  const chosen = {};
+  $("#refs").querySelectorAll("input:checked").forEach(b => {
+    const r = REFS.find(x => x.id === b.value);
+    counters[r.type] += 1;
+    chosen[r.id] = { ref: r, marker: `[@${r.type} ${counters[r.type]}]` };
+  });
+  const has = (id) => chosen[id];
+  const inj = (place) => Object.values(chosen).filter(c => c.ref.place === place);
+
+  // SUBJECT
+  let subject = idea;
+  inj("subject").forEach(c => { subject += `; ${c.ref.text} ${c.marker}`; });
+
+  // ACTION
+  let action = `the scene ${m.action}`;
+
+  // ENVIRONMENT
+  let env = settingRaw || g.env;
+  inj("env").forEach(c => { env += ` — ${c.ref.text} ${c.marker}`; });
+
+  // CAMERA
+  let camera = camChosen;
+
+  // LIGHTING
+  let lighting = light;
+
+  // AUDIO (only if audio refs OR music genre)
+  let audio = "";
+  const audioRefs = inj("audio");
+  if (audioRefs.length) {
+    audio = audioRefs.map(c => `${c.ref.text} ${c.marker}`).join(", ");
+    audio = `immersive sound design — ${audio}, layered ambience`;
+  } else if ($("#genre").value === "Music Video") {
+    audio = "a driving synced soundtrack, rich ambient texture";
+  }
+
+  // VFX
+  let vfx = g.vfx;
+
+  // STYLE
+  let styleTxt = style;
+  inj("style").forEach(c => { styleTxt += `, ${c.ref.text} ${c.marker}`; });
+
+  // CONTINUITY (video extend)
+  let cont = inj("cont").map(c => `${c.ref.text} ${c.marker}`).join(", ");
+
+  // assemble
+  let out = `[Subject: ${subject}]. `;
+  out += `[Action: ${action}]. `;
+  out += `[Environment: ${env}]. `;
+  out += `[Camera: ${camera}]. `;
+  out += `[Lighting: ${lighting}]. `;
+  if (audio) out += `[Audio: ${audio}]. `;
+  if (vfx)   out += `[VFX/Physics: ${vfx}]. `;
+  out += `[Style: ${styleTxt}]. `;
+  if (cont)  out += `[Continuity: ${cont}]. `;
+  out += `${m.tag}, ${aspect.split(" ")[0]}, 8K.`;
+
+  $("#output").innerHTML = highlight(out);
+  $("#output").dataset.raw = out;
+  $("#charCount").textContent = out.length + " CHARS";
+}
+
+function copyText(text, btn, doneLabel) {
+  const fallback = () => {
+    const ta = document.createElement("textarea");
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    try { document.execCommand("copy"); } catch(e){}
+    document.body.removeChild(ta);
+  };
+  const ok = () => {
+    const orig = btn.textContent;
+    btn.textContent = doneLabel || "COPIED ✓"; btn.classList.add("done");
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove("done"); }, 1700);
+  };
+  if (navigator.clipboard) navigator.clipboard.writeText(text).then(ok).catch(() => { fallback(); ok(); });
+  else { fallback(); ok(); }
+}
+
+function renderExamples() {
+  $("#examples").innerHTML = EXAMPLES.map((e, i) => `
+    <div class="card ex">
+      <div class="tagline"><span class="cap">${e.cap}</span>
+        <button class="copy" data-ex="${i}">COPY</button></div>
+      <h4>${e.title}</h4>
+      <div class="body">${highlight(e.body)}</div>
+      <div class="foot">${e.skills.map(s => `<span class="skill">${s}</span>`).join("")}</div>
+    </div>`).join("");
+  $("#examples").querySelectorAll("[data-ex]").forEach(b =>
+    b.addEventListener("click", () => copyText(EXAMPLES[b.dataset.ex].body, b)));
+}
+
+/* init */
+fillSelect($("#genre"), GENRES);
+fillSelect($("#motion"), MOTIONS);
+fillSelect($("#camera"), CAMERAS);
+fillSelect($("#lighting"), LIGHTS);
+fillSelect($("#style"), STYLES);
+fillSelect($("#aspect"), ASPECTS, true);
+buildRefs();
+$("#sysText").textContent = SYSTEM_PROMPT;
+renderExamples();
+generate();
+
+/* events */
+$("#gen").addEventListener("click", generate);
+$("#surprise").addEventListener("click", () => {
+  $("#idea").value = SURPRISES[Math.floor(Math.random()*SURPRISES.length)];
+  const gk = Object.keys(GENRES), mk = Object.keys(MOTIONS), ck = Object.keys(CAMERAS), lk = Object.keys(LIGHTS), sk = Object.keys(STYLES);
+  $("#genre").value = gk[Math.floor(Math.random()*gk.length)];
+  $("#motion").value = mk[Math.floor(Math.random()*mk.length)];
+  $("#camera").value = ck[Math.floor(Math.random()*ck.length)];
+  $("#lighting").value = lk[Math.floor(Math.random()*lk.length)];
+  $("#style").value = sk[Math.floor(Math.random()*sk.length)];
+  generate();
+});
+$("#copyOut").addEventListener("click", (e) => copyText($("#output").dataset.raw || "", e.target));
+$("#copySys").addEventListener("click", (e) => copyText(SYSTEM_PROMPT, e.target, "COPIED ✓"));
+$("#copyReq").addEventListener("click", (e) => {
+  const req = SYSTEM_PROMPT + "\n\n---\nUSER IDEA: " + (clean($("#idea").value) || "(none)") +
+    "\nGenre: " + $("#genre").value + " · Motion: " + $("#motion").value +
+    " · Camera: " + $("#camera").value + " · Lighting: " + $("#lighting").value +
+    " · Style: " + $("#style").value + " · Aspect: " + $("#aspect").value +
+    "\n\nReturn ONE Seedance 2.0 prompt.";
+  copyText(req, e.target, "REQUEST COPIED ✓");
+});
+
+/* tabs */
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+  document.querySelectorAll(".view").forEach(x => x.classList.remove("active"));
+  t.classList.add("active");
+  document.querySelector(`.view[data-view="${t.dataset.tab}"]`).classList.add("active");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}));
+</script>
+</body>
+</html>
