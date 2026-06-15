@@ -8,6 +8,7 @@ const LINKS = [
   { label: "Search", href: "#search" },
   { label: "Collection", href: "#collection" },
   { label: "Showcase", href: "#showcase" },
+  { label: "Frozen Time", href: "#frozen" },
 ];
 
 export default function Navbar() {

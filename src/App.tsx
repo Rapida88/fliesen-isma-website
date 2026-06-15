@@ -7,6 +7,7 @@ import PromptViewer from "./components/PromptViewer";
 import SearchSection from "./components/SearchSection";
 import BentoGrid from "./components/BentoGrid";
 import Showcase from "./components/Showcase";
+import FrozenTime from "./components/FrozenTime";
 import Metrics from "./components/Metrics";
 import FinalCTA from "./components/FinalCTA";
 import Footer from "./components/Footer";
@@ -38,6 +39,7 @@ export default function App() {
         <SearchSection onOpen={setActive} />
         <BentoGrid />
         <Showcase />
+        <FrozenTime />
         <Metrics />
         <FinalCTA />
       </main>

@@ -15,7 +15,8 @@ export type Category =
   | "Sci-Fi"
   | "Travel"
   | "Fashion"
-  | "Cinematic";
+  | "Cinematic"
+  | "Frozen Time";
 
 export type Difficulty = "Beginner" | "Intermediate" | "Advanced" | "Master";
 
@@ -52,6 +53,7 @@ export const CATEGORIES: Category[] = [
   "Travel",
   "Fashion",
   "Cinematic",
+  "Frozen Time",
 ];
 
 export const PROMPTS: Prompt[] = [
@@ -234,5 +236,82 @@ export const PROMPTS: Prompt[] = [
     gradient: "linear-gradient(135deg, #240046 0%, #6a040f 40%, #e85d04 75%, #ffd166 100%)",
     accent: "#e85d04",
     stat: "602K generations",
+  },
+
+  /* ---------- Frozen Time — Seedance 2.0 single-prompt freeze technique ---------- */
+  {
+    id: "frozen-shibuya",
+    title: "Frozen Shibuya",
+    description:
+      "A rain-soaked Shibuya crossing held in absolute stillness while the camera flies between every frozen drop and pedestrian.",
+    prompt:
+      "[Subject: a crowded downtown Tokyo street packed with frozen pedestrians in colorful raincoats, stopped cars with glowing headlights, hovering raindrops, and birds suspended mid-flight]. [Action: stays perfectly frozen with absolute zero motion from any element]. [Environment: rainy Shibuya crossing at twilight with vibrant neon signs reflecting in wet pavement and soft volumetric fog]. [Camera: high-energy dynamic orbiting dolly zoom weaving between every frozen object]. [Style: hyper-realistic, cinematic, dramatic lighting]. Smooth motion, stable framing.",
+    model: "Seedance",
+    category: "Frozen Time",
+    difficulty: "Advanced",
+    tags: ["frozen", "bullet-time", "neon rain", "orbit"],
+    gradient: "linear-gradient(135deg, #0d021f 0%, #4a0e6b 35%, #06b6d4 70%, #f72585 100%)",
+    accent: "#22d3ee",
+    stat: "738K generations",
+  },
+  {
+    id: "frozen-toss",
+    title: "The Frozen Toss",
+    description:
+      "A wedding bouquet hangs mid-air, petals and confetti suspended, as the camera arcs through the held moment.",
+    prompt:
+      "[Subject: a bride mid-laugh with a tossed bouquet hanging in the air, scattered petals and rice grains suspended around her, guests frozen with raised hands and champagne droplets hovering]. [Action: every element holds perfectly still with absolute zero motion]. [Environment: sunlit garden courtyard at golden hour with soft bokeh, drifting pollen frozen in warm light]. [Camera: slow cinematic orbit arcing up and around the frozen bouquet]. [Style: hyper-realistic, romantic, dramatic backlight]. Smooth motion, stable framing.",
+    model: "Seedance",
+    category: "Frozen Time",
+    difficulty: "Intermediate",
+    tags: ["frozen", "wedding", "golden hour", "petals"],
+    gradient: "linear-gradient(135deg, #2b1a12 0%, #9a5a3a 40%, #e8a87c 75%, #ffe3c9 100%)",
+    accent: "#f4a261",
+    stat: "264K generations",
+  },
+  {
+    id: "frozen-slam",
+    title: "Suspended Slam",
+    description:
+      "A streetball dunk locked at its apex — player, ball and sweat all frozen while the camera whips around the rim.",
+    prompt:
+      "[Subject: a streetball player frozen at the peak of a slam dunk, basketball pinned against the rim, droplets of sweat and chalk dust suspended in the air, onlookers frozen mid-cheer]. [Action: holds completely frozen with absolute zero motion from any element]. [Environment: floodlit outdoor court at dusk, chain-link fence and graffiti walls, volumetric haze in the stadium lights]. [Camera: aggressive bullet-time orbit sweeping 180 degrees around the suspended player]. [Style: hyper-realistic, high-contrast sports cinematography]. Smooth motion, stable framing.",
+    model: "Seedance",
+    category: "Frozen Time",
+    difficulty: "Advanced",
+    tags: ["frozen", "bullet-time", "sports", "orbit"],
+    gradient: "linear-gradient(135deg, #0a1a14 0%, #1b4332 40%, #ff7b00 78%, #ffd000 100%)",
+    accent: "#ff8800",
+    stat: "311K generations",
+  },
+  {
+    id: "frozen-wave",
+    title: "The Standing Wave",
+    description:
+      "A giant barrel wave frozen mid-curl with a surfer locked inside it, every spray droplet hanging like glass.",
+    prompt:
+      "[Subject: a colossal ocean barrel wave frozen mid-curl with a surfer locked inside the tube, sheets of spray and individual water droplets suspended like glass beads, seabirds frozen overhead]. [Action: the entire scene holds frozen with absolute zero motion]. [Environment: open ocean at sunrise, low warm light raking through the translucent wave, fine mist hanging in the air]. [Camera: smooth dolly push gliding into the frozen barrel then orbiting the surfer]. [Style: hyper-realistic, cinematic, luminous backlight]. Smooth motion, stable framing.",
+    model: "Seedance",
+    category: "Frozen Time",
+    difficulty: "Master",
+    tags: ["frozen", "ocean", "surf", "sunrise"],
+    gradient: "linear-gradient(135deg, #021b2e 0%, #024e6b 40%, #06b6d4 75%, #a8e6ff 100%)",
+    accent: "#06b6d4",
+    stat: "402K generations",
+  },
+  {
+    id: "frozen-midnight",
+    title: "Midnight, Held",
+    description:
+      "A New Year's countdown frozen at zero — confetti, fireworks and a thousand raised glasses suspended in time.",
+    prompt:
+      "[Subject: a packed New Year's Eve crowd frozen at the stroke of midnight, confetti and streamers suspended in the air, raised champagne glasses with hovering bubbles, fireworks frozen as expanding sparks]. [Action: everything stays perfectly frozen with absolute zero motion from any element]. [Environment: a glittering city square at night with giant illuminated countdown sign reading 00:00, neon reflections on wet stone]. [Camera: dynamic crane that rises and orbits through the frozen confetti and fireworks]. [Style: hyper-realistic, festive, dramatic lighting]. Smooth motion, stable framing.",
+    model: "Seedance",
+    category: "Frozen Time",
+    difficulty: "Advanced",
+    tags: ["frozen", "fireworks", "confetti", "crane"],
+    gradient: "linear-gradient(135deg, #050a1f 0%, #1b2a6b 40%, #7b5cff 72%, #ffd60a 100%)",
+    accent: "#9d8bff",
+    stat: "356K generations",
   },
 ];
